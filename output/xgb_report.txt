@@ -1,0 +1,42 @@
+XGBoost – Training Report
+
+Best Hyperparameters (Grid Search):
+  - colsample_bytree: 0.8
+  - gamma: 5
+  - learning_rate: 0.05
+  - max_depth: 8
+  - n_estimators: 300
+  - reg_alpha: 2
+  - reg_lambda: 5
+  - subsample: 0.7
+
+Cross-Validation (mean ± std)
+   accuracy: 0.8469 ± 0.0031
+  precision: 0.9144 ± 0.0048
+     recall: 0.7676 ± 0.0058
+         f1: 0.8346 ± 0.0032
+    roc_auc: 0.9122 ± 0.0022
+
+Test Set Metrics
+  Accuracy : 0.8567
+  Precision: 0.9069
+  Recall   : 0.7868
+  F1 Score : 0.8426
+  ROC AUC  : 0.9198
+  Confusion Matrix (rows=true, cols=pred):
+    [[TN  FP]
+     [FN  TP]]
+    [[4481  373]
+     [985  3635]]
+
+Training Set Metrics
+  Accuracy : 0.8666
+  Precision: 0.9369
+  Recall   : 0.7879
+  F1 Score : 0.8560
+  ROC AUC  : 0.9361
+  Confusion Matrix (rows=true, cols=pred):
+    [[TN  FP]
+     [FN  TP]]
+    [[17849  1013]
+     [4050  15046]]

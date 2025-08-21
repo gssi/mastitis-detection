@@ -1,0 +1,26 @@
+=== Feature Summary Report ===
+
+Total features listed: 20
+
+Feature                  Importance     Feature Combo
+----------------------------------------------------------------------
+scs                      1.0000         scs_t-1, fat, scs_t-2
+scs_t-1                  0.4491         scs, scs_t-2, ec
+scs_t-2                  0.3461         scs, scs_t-1, age
+age                      0.1915         ec, scs, lactose
+ec                       0.1362         scs, ec_t-1, fat
+milk                     0.0922         milk_t-1, scs, milk_t-2
+protein                  0.0529         milk, protein_t-2, protein_t-1
+fat                      0.0450         scs, ec, milk
+lactose                  0.0415         scs, fat, ec
+season_autumn            0.0323         ec, age, milk_t-1
+ec_t-1                   0.0303         ec, ec_t-2, age
+lactation_phase_late_lactation0.0302         milk_t-1, milk, protein
+milk_t-1                 0.0266         milk, lactation_phase_late_lactation, scs
+ec_t-2                   0.0222         ec, ec_t-1, age
+season_summer            0.0191         scs, milk, ec
+milk_t-2                 0.0153         milk, scs, protein
+lactation_phase_peripartum0.0149         scs, lactose, ec
+protein_t-1              0.0120         protein, lactation_phase_late_lactation, protein_t-2
+protein_t-2              0.0094         protein, lactation_phase_late_lactation, age
+lactose_t-2              0.0070         lactose, ec, ec_t-2
