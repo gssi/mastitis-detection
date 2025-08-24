@@ -144,48 +144,74 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
     int
         IQS in {0, 1, 2, 3}
     """
+    import numpy as np
+
     score = 0
+    WD_THRESH = 0.10
 
     # 1) Normalized Wasserstein distance (robust to scale via IQR normalization)
     wd = {}
     for c in cols:
-        q75 = pre[c].quantile(0.75)
-        q25 = pre[c].quantile(0.25)
-        iqr = q75 - q25 + 1e-8
-        dist = wasserstein_distance(pre[c], post[c]) / iqr
+        x = pre[c]
+        y = post[c]
+        # Use only rows where both are non-NaN (local NaN handling)
+        m = x.notna() & y.notna()
+        if m.sum() == 0:
+            wd[c] = float("nan")
+            continue
+        x = x[m]
+        y = y[m]
+
+        iqr = (x.quantile(0.75) - x.quantile(0.25)) + 1e-8
+        dist = wasserstein_distance(x.values, y.values) / iqr
         wd[c] = float(dist)
 
-    bad_cols = [c for c, d in wd.items() if d > 0.1]
+    bad_cols = [c for c, d in wd.items() if (np.isfinite(d) and d > WD_THRESH)]
     if not bad_cols:
         score += 1
     else:
-        logging.warning("IQS criterion #1 violated: %d vars with normalized distance > 0.1", len(bad_cols))
+        logging.warning(
+            "IQS criterion #1 violated: %d vars with normalized distance > %.2f",
+            len(bad_cols), WD_THRESH
+        )
         for c in bad_cols:
             logging.info("  - '%s': normalized distance = %.4f", c, wd[c])
 
-    # 2) Correlation preservation
-    pre_corr = pre[cols].corr()
-    post_corr = post[cols].corr()
-    corr_diff = (pre_corr - post_corr).abs().mean().mean()
+    # 2) Correlation preservation 
+    common = pre[cols].notna().all(axis=1) & post[cols].notna().all(axis=1)
+    if common.sum() > 2:  # servono almeno 3 righe per corr
+        pre_corr = pre.loc[common, cols].corr()
+        post_corr = post.loc[common, cols].corr()
+        corr_diff = (pre_corr - post_corr).abs().mean().mean()
+    else:
+        corr_diff = np.inf
+        logging.warning(
+            "IQS criterion #2 skipped: insufficient common complete rows (n=%d).",
+            int(common.sum())
+        )
 
     if corr_diff <= 0.02:
         score += 1
     else:
         logging.warning("IQS criterion #2 violated: mean |Δcorr| = %.4f", float(corr_diff))
-        corr_matrix_diff = (pre_corr - post_corr).abs()
-        for c in cols:
-            mean_diff = float(corr_matrix_diff[c].mean())
-            if mean_diff > 0.02:
-                logging.info("  - '%s': mean |Δcorr| = %.4f", c, mean_diff)
+        if np.isfinite(corr_diff):
+            corr_matrix_diff = (pre_corr - post_corr).abs()
+            for c in cols:
+                mean_diff = float(corr_matrix_diff[c].mean())
+                if mean_diff > 0.02:
+                    logging.info("  - '%s': mean |Δcorr| = %.4f", c, mean_diff)
 
-    # 3) Range validity
+    # 3) Range validity (post-imputation plausibility)
     out_of_range = False
     for c in cols:
         if c in RANGES:
             lo, hi = RANGES[c]
             violations = int(((post[c] < lo) | (post[c] > hi)).sum())
             if violations > 0:
-                logging.warning("IQS criterion #3 violated: '%s' has %d out-of-range values [%s, %s]", c, violations, lo, hi)
+                logging.warning(
+                    "IQS criterion #3 violated: '%s' has %d out-of-range values [%s, %s]",
+                    c, violations, lo, hi
+                )
                 out_of_range = True
     if not out_of_range:
         score += 1
@@ -218,8 +244,7 @@ def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs
     df = pd.read_parquet(input_path)
 
     # Build base (complete cases) for IQS evaluation
-    mask = df[CLINICAL_COLS].notna().all(axis=1)
-    base = df.loc[mask, CLINICAL_COLS]
+    base = df[CLINICAL_COLS]
     if 0 < sample_frac_iqs < 1.0 and base.shape[0] > 0:
         base = base.sample(frac=sample_frac_iqs, random_state=42)
 
