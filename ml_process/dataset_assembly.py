@@ -140,7 +140,7 @@ def merge_main() -> None:
     del step1
     gc.collect()
 
-    # ----- Step 3: INNER join with anagraphic info
+    # Step 3: INNER join with anagraphic info
     log.info("Step 3 – INNER join with ana_agg on keys [id]")
     merged = unisci([
         step2,
@@ -168,3 +168,4 @@ def merge_main() -> None:
 
 if __name__ == "__main__":
     merge_main()
+
