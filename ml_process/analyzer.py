@@ -30,11 +30,7 @@ def get_permutation_importance(models, X_test, y_test, scoring='roc_auc', n_repe
     feature_importance = {}
     for name, model in models.items():
         # Compute permutation importance for one fitted model
-        result = permutation_importance(model, X_test, y_test,
-                                        n_repeats=n_repeats,
-                                        random_state=random_state,
-                                        scoring=scoring,
-                                        n_jobs=-1)
+        result = permutation_importance(model, X_test, y_test,n_repeats=n_repeats,random_state=random_state,scoring=scoring,n_jobs=-1)
         # Store mean importance across repeats
         feature_importance[name] = result.importances_mean
 
@@ -46,6 +42,7 @@ def get_permutation_importance(models, X_test, y_test, scoring='roc_auc', n_repe
 
     # Aggregate across models to get a consensus ranking
     importance_df['mean_importance'] = importance_df.mean(axis=1)
+    
     return importance_df
 
 def assemble_feature_summary(models, base_model_name, X_test, y_test, top_n=20):
@@ -106,8 +103,8 @@ def assemble_feature_summary(models, base_model_name, X_test, y_test, top_n=20):
         feature_combo_map = {}
         for feat in common_features:
             idx = X_test.columns.get_loc(feat)
-            interactions = interaction_matrix[idx]               # vector over all features
-            sorted_idx = np.argsort(-interactions)               # descending by interaction strength
+            interactions = interaction_matrix[idx] # vector over all features
+            sorted_idx = np.argsort(-interactions) # descending by interaction strength
             top_feats = [X_test.columns[j] for j in sorted_idx if X_test.columns[j] != feat][:3]
             feature_combo_map[feat] = ", ".join(top_feats)
 
@@ -149,5 +146,6 @@ def save_feature_summary_txt(feature_summary: pd.DataFrame, file_path: Path):
         for _, row in feature_summary.iterrows():
             f.write(f"{row['Feature']:<25}{row['Importance']:<15.4f}{row['Feature Combo']}\n")
 
-    print(f"✅ Feature summary saved to: {file_path}")
+    print(f"Feature summary saved to: {file_path}")
+
 
