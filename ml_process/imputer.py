@@ -15,7 +15,7 @@ Main functionalities:
 - distribution_comparison: KDE plots to visually compare pre/post distributions.
 """
 
-from libraries import pd, Path, logging, wasserstein_distance, List, Dict, time, sns, plt
+from libraries import pd, Path, logging, wasserstein_distance, List, Dict, time, sns, plt, np
 from collections import defaultdict
 
 # =========================
@@ -87,12 +87,10 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
             break
         if not set(grp).issubset(df.columns):
             continue
-
         g = df.groupby(grp, dropna=False)[col]
         # Skip extremely sparse grouping levels (not enough data for a stable median)
         if g.count().median() < 2:
             continue
-
         filled = g.transform("median")
         newly_filled = series.isna() & filled.notna()
         if newly_filled.any():
@@ -114,14 +112,12 @@ def hierarchical_block(df: pd.DataFrame, cols: List[str], hier1: List[List[str]]
     for c in cols:
         if df[c].isna().sum() == 0:
             continue
-
         # Try IHG → PHG → fallback IHG
         df[c] = apply_hierarchy(df, c, hier1, imput_log)
         if df[c].isna().sum() > 0:
             df[c] = apply_hierarchy(df, c, hier2, imput_log)
         if df[c].isna().sum() > 0:
             df[c] = apply_hierarchy(df, c, hier1, imput_log)
-
         if df[c].isna().sum() > 0:
             logging.warning("Variable '%s' still has %d missing values post-imputation.", c, int(df[c].isna().sum()))
 
@@ -144,7 +140,6 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
     int
         IQS in {0, 1, 2, 3}
     """
-    import numpy as np
 
     score = 0
     WD_THRESH = 0.10
@@ -161,7 +156,6 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
             continue
         x = x[m]
         y = y[m]
-
         iqr = (x.quantile(0.75) - x.quantile(0.25)) + 1e-8
         dist = wasserstein_distance(x.values, y.values) / iqr
         wd[c] = float(dist)
@@ -170,10 +164,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
     if not bad_cols:
         score += 1
     else:
-        logging.warning(
-            "IQS criterion #1 violated: %d vars with normalized distance > %.2f",
-            len(bad_cols), WD_THRESH
-        )
+        logging.warning("IQS criterion #1 violated: %d vars with normalized distance > %.2f",len(bad_cols), WD_THRESH)
         for c in bad_cols:
             logging.info("  - '%s': normalized distance = %.4f", c, wd[c])
 
@@ -185,10 +176,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
         corr_diff = (pre_corr - post_corr).abs().mean().mean()
     else:
         corr_diff = np.inf
-        logging.warning(
-            "IQS criterion #2 skipped: insufficient common complete rows (n=%d).",
-            int(common.sum())
-        )
+        logging.warning("IQS criterion #2 skipped: insufficient common complete rows (n=%d).",int(common.sum()))
 
     if corr_diff <= 0.02:
         score += 1
@@ -208,10 +196,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
             lo, hi = RANGES[c]
             violations = int(((post[c] < lo) | (post[c] > hi)).sum())
             if violations > 0:
-                logging.warning(
-                    "IQS criterion #3 violated: '%s' has %d out-of-range values [%s, %s]",
-                    c, violations, lo, hi
-                )
+                logging.warning("IQS criterion #3 violated: '%s' has %d out-of-range values [%s, %s]",c, violations, lo, hi)
                 out_of_range = True
     if not out_of_range:
         score += 1
@@ -310,3 +295,4 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
 
     # Cleanup
     del df_pre, df_post, variables, fig, axes
+
