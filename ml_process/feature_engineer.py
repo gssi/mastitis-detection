@@ -27,11 +27,7 @@ WIDE_COLS = ["scs", "milk", "protein", "fat", "lactose", "ec", "mastitis", "mont
 # FUNCTIONS
 # =========================
 
-def create_wide(
-    input_path: Path,
-    output_path: Path,
-    lag_steps=None,
-    id_col: str = "id",
+def create_wide(input_path: Path,output_path: Path,lag_steps=None,id_col: str = "id",
     time_cols: tuple[str, str] = ("year", "month"),
     min_year: int = 2020,
 ) -> None:
@@ -93,7 +89,7 @@ def create_wide(
     # Ensure time columns are integers for sorting/lag logic
     df[[ycol, mcol]] = df[[ycol, mcol]].astype(int)
 
-    # Optional: coerce boolean target-like columns to int (e.g., mastitis flags)
+    # Optional: coerce boolean target-like columns to int (mastitis flags)
     for maybe_bool in ["mastitis"]:
         if maybe_bool in df.columns and df[maybe_bool].dtype == bool:
             df[maybe_bool] = df[maybe_bool].astype(int)
@@ -118,17 +114,18 @@ def create_wide(
     else:
         logging.warning("No base columns available for lagging. Skipping lag creation.")
 
-    # -------- Valid date filtering & final cleanup
+    # Valid date filtering & final cleanup
     if ycol in df.columns:
         df = df[df[ycol] >= min_year]
 
     # Remove any incomplete rows after lagging to ensure model-ready features
     df = df.dropna().reset_index(drop=True)
 
-    # -------- Save
+    # Save
     logging.info("Saving Parquet to %s …", output_path)
     df.to_parquet(output_path, index=False)
     logging.info("Feature engineering completed with %d rows and %d columns.", len(df), df.shape[1])
 
     # Cleanup 
     del df
+
