@@ -103,7 +103,7 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
 
     # Clean up helper columns 
     df.drop(columns=["chiave_blocco"], inplace=True)
-    df.drop(columns=["parto_blocco", "row_number", "Marca"], errors="ignore", inplace=True)
+    df.drop(columns=["parto_blocco", "row_number"], errors="ignore", inplace=True)
     df.reset_index(drop=True, inplace=True)
     gc.collect()
 

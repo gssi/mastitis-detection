@@ -150,6 +150,7 @@ def merge_main() -> None:
     gc.collect()
 
     # Save
+    merged = merged.drop("Marca", axis=1, errors="ignore") # Drop 'Marca' column to keep only animal ID
     merged.to_parquet(OUTPUT_PARQUET, index=False)
     log.info(
         "Merged dataset saved ➔ %s (%d rows, %d columns)",
