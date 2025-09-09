@@ -17,7 +17,7 @@ The system design follows four guiding principles:
 
 
 ## Project structure
-
+```
 mammary_diseases_indicators/
 │── classifier/ # Pre-trained ML models
 │ ├── cat_model.pkl # CatBoost trained model
@@ -57,6 +57,7 @@ mammary_diseases_indicators/
 │── requirements.txt # Python dependencies
 │── .gitignore
 │── .git/
+```
 
 
 ## Installation
