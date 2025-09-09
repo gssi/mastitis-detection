@@ -1,7 +1,7 @@
 # Mammary Diseases Indicators 
 
 ##  Overview
-We propose a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators using multi-source veterinary data.  
+This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators using multi-source veterinary data.  
 
 The system integrates four key steps:
 1. **Unified dataset construction** --> merging productive, reproductive, clinical, and environmental variables into a consistent dataset.  
