@@ -78,25 +78,38 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
 
     Notes
     -----
-    - Groups with very few observations are skipped (median stability check via count median < 2).
+    - Groups with very few observations are skipped using a **per-group** support threshold (default: ≥3).
     - Only groups whose keys are fully present in df are attempted.
     """
     series = df[col].copy()
+    if series.isna().sum() == 0:
+        return series
+
+    # minimal per-group support to trust the group's median
+    min_group_n = 3  # tune to 2/4/5 depending on your desired locality vs stability
+
     for grp in hier:
         if series.isna().sum() == 0:
             break
         if not set(grp).issubset(df.columns):
             continue
-        g = df.groupby(grp, dropna=False)[col]
-        # Skip extremely sparse grouping levels (not enough data for a stable median)
-        if g.count().median() < 2:
-            continue
-        filled = g.transform("median")
-        newly_filled = series.isna() & filled.notna()
-        if newly_filled.any():
-            log_map[col].append(" → ".join(grp))
-            series[newly_filled] = filled[newly_filled]
 
+        # dropna=True to avoid NaN-key groups
+        g = df.groupby(grp, dropna=True)[col]
+
+        # per-group threshold instead of "median(count) at level"
+        counts = g.transform("count")
+        medians = g.transform("median")
+
+        # fill only where: value is NaN, a group median exists, and the group's count >= threshold
+        newly_filled = series.isna() & medians.notna() & (counts >= min_group_n)
+
+        if newly_filled.any():
+            # optional: include threshold info in the log
+            log_map[col].append(" → ".join(grp) + f" [per-group n≥{min_group_n}]")
+            series.loc[newly_filled] = medians.loc[newly_filled]
+
+        # continue to next (broader) level for any remaining NaNs
     return series
 
 
@@ -295,4 +308,5 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
 
     # Cleanup
     del df_pre, df_post, variables, fig, axes
+
 
