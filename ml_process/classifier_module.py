@@ -478,7 +478,7 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         loss_function='Logloss',
         boosting_type='Ordered',
         eval_metric='AUC',
-        cat_features=[],  # set here if you have categorical vars
+        allow_writing_files=False,
         verbose=200,
         random_seed=42,
         thread_count=max(1, multiprocessing.cpu_count() - 2),
@@ -502,7 +502,7 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         **best_params,
         loss_function="Logloss",
         eval_metric="AUC",
-        cat_features=[],  # set here if you have categorical vars
+        allow_writing_files=False,
         random_seed=42,
         thread_count=max(1, multiprocessing.cpu_count() - 2),
         verbose=100,
@@ -819,4 +819,5 @@ def upload_classifiers(save_dir: Path):
                 loaded_models[model_name] = pickle.load(f)
             print(f" Loaded {model_name} from {model_path}")
     return loaded_models
+
 
