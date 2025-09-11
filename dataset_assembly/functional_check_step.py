@@ -181,7 +181,7 @@ def cf_main() -> None:
     - Apply positivity and IQR-based outlier filters.
     - Save final Parquet outputs and unique animal IDs.
     """
-    # -------- Load & base filtering
+    # Load & base filtering
     cf = pd.read_csv(
         RAW_CF_CSV,
         low_memory=False,
@@ -256,3 +256,4 @@ def cf_main() -> None:
 
 if __name__ == "__main__":
     cf_main()
+
