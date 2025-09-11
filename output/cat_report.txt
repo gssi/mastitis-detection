@@ -8,35 +8,35 @@ Best Hyperparameters (Grid Search):
   - l2_leaf_reg: 5
   - learning_rate: 0.05
   - random_strength: 5
-  - scale_pos_weight: 1
 
 Cross-Validation (mean ± std)
-   accuracy: 0.8446 ± 0.0034
-  precision: 0.9019 ± 0.0039
-     recall: 0.7754 ± 0.0056
-         f1: 0.8339 ± 0.0037
-    roc_auc: 0.9104 ± 0.0024
+   accuracy: 0.8704 ± 0.0037
+  precision: 0.9222 ± 0.0031
+     recall: 0.8082 ± 0.0083
+         f1: 0.8614 ± 0.0047
+    roc_auc: 0.9221 ± 0.0044
 
 Test Set Metrics
-  Accuracy : 0.8520
-  Precision: 0.8944
-  Recall   : 0.7898
-  F1 Score : 0.8389
-  ROC AUC  : 0.9173
+  Accuracy : 0.8794
+  Precision: 0.9355
+  Recall   : 0.8181
+  F1 Score : 0.8729
+  ROC AUC  : 0.9278
   Confusion Matrix (rows=true, cols=pred):
     [[TN  FP]
      [FN  TP]]
-    [[4423  431]
-     [971  3649]]
+    [[4400  270]
+     [870  3913]]
 
 Training Set Metrics
-  Accuracy : 0.8705
-  Precision: 0.9330
-  Recall   : 0.8002
-  F1 Score : 0.8615
-  ROC AUC  : 0.9413
+  Accuracy : 0.8875
+  Precision: 0.9449
+  Recall   : 0.8223
+  F1 Score : 0.8793
+  ROC AUC  : 0.9523
   Confusion Matrix (rows=true, cols=pred):
     [[TN  FP]
      [FN  TP]]
-    [[17764  1098]
-     [3816  15280]]
+    [[18138  908]
+     [3365  15568]]
+
