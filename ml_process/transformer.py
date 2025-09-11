@@ -58,7 +58,7 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
     log.info("Starting pre-filtering from file: %s", input_path)
     df = pd.read_parquet(input_path)
 
-    # --- Pre-calving filtering ---
+    # Pre-calving filtering 
     # Stable temporal sort (mergesort preserves order on ties)
     df.sort_values(["id", "year", "month"], kind="mergesort", inplace=True)
 
@@ -267,4 +267,5 @@ def dit(input_path: Path, output_path: Path) -> None:
     del df, reference_date, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
