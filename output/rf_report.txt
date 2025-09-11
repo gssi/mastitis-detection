@@ -1,7 +1,7 @@
 Random Forest – Training Report
 
 Best Hyperparameters (Grid Search):
-  - bootstrap: False
+  - bootstrap: True
   - max_depth: 8
   - max_features: sqrt
   - min_samples_leaf: 4
@@ -9,32 +9,33 @@ Best Hyperparameters (Grid Search):
   - n_estimators: 300
 
 Cross-Validation (mean ± std)
-   accuracy: 0.8228 ± 0.0032
-  precision: 0.8675 ± 0.0038
-     recall: 0.7645 ± 0.0065
-         f1: 0.8127 ± 0.0032
-    roc_auc: 0.8937 ± 0.0025
+   accuracy: 0.8496 ± 0.0042
+  precision: 0.8834 ± 0.0050
+     recall: 0.8044 ± 0.0067
+         f1: 0.8420 ± 0.0048
+    roc_auc: 0.9077 ± 0.0047
 
 Test Set Metrics
-  Accuracy : 0.8318
-  Precision: 0.8602
-  Recall   : 0.7820
-  F1 Score : 0.8193
-  ROC AUC  : 0.9022
+  Accuracy : 0.8552
+  Precision: 0.8915
+  Recall   : 0.8127
+  F1 Score : 0.8503
+  ROC AUC  : 0.9126
   Confusion Matrix (rows=true, cols=pred):
     [[TN  FP]
      [FN  TP]]
-    [[4267  587]
-     [1007  3613]]
+    [[4197  473]
+     [896  3887]]
 
 Training Set Metrics
-  Accuracy : 0.8372
-  Precision: 0.8845
-  Recall   : 0.7779
-  F1 Score : 0.8278
-  ROC AUC  : 0.9083
+  Accuracy : 0.8589
+  Precision: 0.8952
+  Recall   : 0.8119
+  F1 Score : 0.8515
+  ROC AUC  : 0.9209
   Confusion Matrix (rows=true, cols=pred):
     [[TN  FP]
      [FN  TP]]
-    [[16923  1939]
-     [4241  14855]]
+    [[17247  1799]
+     [3561  15372]]
+
