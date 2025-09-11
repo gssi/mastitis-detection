@@ -157,7 +157,7 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         n_jobs=num_cores
     )
 
-    # 3) Param grid (fixed)
+    # 3) Param grid (fixed with best values after Grid Search)
     param_grid = {
         'n_estimators': [300],
         'max_depth': [8],
@@ -304,14 +304,14 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     Saves the best estimator to `classifier/rf_model.pkl` and a plain-text
     metrics report to `output/rf_report.txt`.
     """
-    # 1) Param grid
+    # 1) Param grid (fixed with best values after Grid Search)
     param_grid = {
         'n_estimators': [300],
         'max_depth': [8],
         'min_samples_split': [10],
         'min_samples_leaf': [4],
         'max_features': ['sqrt'],
-        'bootstrap': [True, False],
+        'bootstrap': [True],
     }
 
     # 2) Base model
@@ -462,7 +462,7 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
       - best estimator to  `classifier/cat_model.pkl`
       - plain-text metrics to `output/cat_report.txt`
     """
-    # 1) Param grid
+    # 1) Param grid (fixed with best values after Grid Search)
     param_grid = {
         'iterations': [300],
         'learning_rate': [0.05],
@@ -627,7 +627,7 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
       - best estimator to  `classifier/lgbm_model.pkl`
       - plain-text metrics to `output/lgbm_report.txt`
     """
-    # 1) Param grid
+    # 1) Param grid (fixed with best values after Grid Search)
     param_grid = {
         'n_estimators': [300],
         'max_depth': [8],
@@ -819,3 +819,4 @@ def upload_classifiers(save_dir: Path):
                 loaded_models[model_name] = pickle.load(f)
             print(f" Loaded {model_name} from {model_path}")
     return loaded_models
+
