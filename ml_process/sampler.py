@@ -118,14 +118,14 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
     logging.info("Positives (first-onset, valid): %d", len(positivi))
     logging.info("Pure negatives (healthy, valid): %d", len(negativi_puri))
 
-    # Strata definition: age_* (one-hot) × lactation_phase_* (one-hot)
+    # Strata definition: age × lactation_phase_* (one-hot)
     fase_cols = [c for c in df_wide.columns if c.startswith("lactation_phase_")]
-    age_cols = [c for c in df_wide.columns if c.startswith("age_")]  # auto-detected
+    age_cols = [c for c in df_wide.columns if c.startswith("age")]  # auto-detected
 
     if not age_cols or not fase_cols:
         missing = []
         if not age_cols:
-            missing.append("age_*")
+            missing.append("age")
         if not fase_cols:
             missing.append("lactation_phase_*")
         raise KeyError(f"Required one-hot columns missing for strata: {', '.join(missing)}")
@@ -182,3 +182,4 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         del negativi_finali
     del conteggio_strati, campioni_negativi, age_cols, fase_cols
     gc.collect()
+
