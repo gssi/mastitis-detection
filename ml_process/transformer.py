@@ -217,17 +217,7 @@ def dit(input_path: Path, output_path: Path) -> None:
 
     # MASTITIS label 
     # Diagnosis + acceptable temporal windows 
-    diagnosis_cf = (
-        df["diagnosis"].notna()
-        & df["cf_date"].notna()
-        & (df["cf_date"] <= df["t_date"])
-    )
-    diagnosis_calving = (
-        df["diagnosis"].notna()
-        & df["cf_date"].isna()
-        & df["calving_date"].notna()
-        & (df["calving_date"] <= df["t_date"])
-    )
+
     diagnosis_no_dates = (
         df["diagnosis"].notna()
         & df["cf_date"].isna()
@@ -236,23 +226,17 @@ def dit(input_path: Path, output_path: Path) -> None:
     cf_within_30_days = (
         df["cf_date"].notna()
         & df["t_date"].notna()
-        & (df["cf_date"] < df["t_date"])
+        & (df["cf_date"] <= df["t_date"])
         & ((df["t_date"] - df["cf_date"]).dt.days <= 30)
     )
     calving_within_30_days = (
         df["cf_date"].isna()
         & df["calving_date"].notna()
         & df["t_date"].notna()
-        & (df["calving_date"] < df["t_date"])
+        & (df["calving_date"] <= df["t_date"])
         & ((df["t_date"] - df["calving_date"]).dt.days <= 30)
     )
-    mastitis_mask_updated = (
-        diagnosis_cf
-        | diagnosis_calving
-        | diagnosis_no_dates
-        | cf_within_30_days
-        | calving_within_30_days
-    )
+    mastitis_mask_updated = (diagnosis_no_dates | cf_within_30_days | calving_within_30_days)
     df["mastitis"] = mastitis_mask_updated.fillna(False).astype(int)
 
     # Drop helper columns to reduce memory footprint
@@ -267,5 +251,6 @@ def dit(input_path: Path, output_path: Path) -> None:
     del df, reference_date, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
 
