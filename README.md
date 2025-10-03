@@ -80,7 +80,7 @@ cd mammary_diseases_indicators
 # On Windows (PowerShell)
 python -m venv my_venv
 
-# On Linux/WSL
+# On Linux/macOS/WSL
 python3 -m venv my_venv
 
 # NOTE for Linux/WSL users:
@@ -93,17 +93,18 @@ python3 -m venv my_venv
 #   python3 -m venv my_venv
 
 # 4. Activate the environment
+
 # On Windows (PowerShell)
 my_venv\Scripts\activate
 
 # On Linux/macOS/WSL
 source my_venv/bin/activate
 
-# (To deactivate the environment)
-deactivate
-
 # 5. Install Python dependencies
 pip install -r requirements.txt   # use "pip3" if required on Linux/Mac
+
+# (To deactivate the environment)
+deactivate
 
 ```
 
