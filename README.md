@@ -64,8 +64,9 @@ mammary_diseases_indicators/
 
 This project has been tested with **Python 3.11.9+** on Windows 11 Pro.  
 Make sure you have `pip` available in your environment.
-
-Clone the repository and install dependencies:
+You need Git to clone the repository directly. If you don’t have Git installed, you can:  
+  - [Download Git](https://git-scm.com/downloads) and install it, **or**  
+  - Download the repository as a ZIP file from GitHub.
 
 ```bash
 # 1. Clone the repository
