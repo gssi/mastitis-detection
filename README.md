@@ -76,17 +76,35 @@ git clone https://github.com/davi94cs/mammary_diseases_indicators.git
 cd mammary_diseases_indicators
 
 # 3. (Recommended) Create a virtual environment (e.g. "my_venv")
-python -m venv my_venv   # (use "python3" if required on Linux/Mac)
+
+# On Windows (PowerShell)
+python -m venv my_venv
+
+# On Linux/WSL
+python3 -m venv my_venv
+
+# NOTE for Linux/WSL users:
+# If you see an error like "ensurepip is not available",
+# install the venv module with:
+#   sudo apt update
+#   sudo apt install python3-venv -y
+# (use the correct version: e.g. python3.12-venv if python3 --version is 3.12)
+# Then recreate the environment with:
+#   python3 -m venv my_venv
 
 # 4. Activate the environment
-source my_venv/bin/activate    # On Linux/MacOS
-my_venv\Scripts\activate       # On Windows (PowerShell)
+# On Windows (PowerShell)
+my_venv\Scripts\activate
+
+# On Linux/macOS/WSL
+source my_venv/bin/activate
 
 # (To deactivate the environment)
 deactivate
 
 # 5. Install Python dependencies
-pip install -r requirements.txt   # (use "pip3" if required on Linux/Mac)
+pip install -r requirements.txt   # use "pip3" if required on Linux/Mac
+
 ```
 
 
