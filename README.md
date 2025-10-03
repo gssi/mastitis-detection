@@ -62,7 +62,8 @@ mammary_diseases_indicators/
 
 ## Installation
 
-This project has been tested with **Python 3.11.9+**. Make sure you have `pip` available in your environment.
+This project has been tested with **Python 3.11.9+** on Windows 11 Pro.  
+Make sure you have `pip` available in your environment.
 
 Clone the repository and install dependencies:
 
@@ -73,8 +74,18 @@ git clone https://github.com/davi94cs/mammary_diseases_indicators.git
 # 2. Move into the project folder
 cd mammary_diseases_indicators
 
-# 3. Install Python dependencies
-pip install -r requirements.txt
+# 3. (Recommended) Create a virtual environment (e.g. "my_venv")
+python -m venv my_venv   # (use "python3" if required on Linux/Mac)
+
+# 4. Activate the environment
+source my_venv/bin/activate    # On Linux/MacOS
+my_venv\Scripts\activate       # On Windows (PowerShell)
+
+# (To deactivate the environment)
+deactivate
+
+# 5. Install Python dependencies
+pip install -r requirements.txt   # (use "pip3" if required on Linux/Mac)
 ```
 
 
