@@ -241,7 +241,7 @@ def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs
     """
     df = pd.read_parquet(input_path)
 
-    # Build base (complete cases) for IQS evaluation
+    # Build base for IQS evaluation
     base = df[CLINICAL_COLS]
     if 0 < sample_frac_iqs <= 1.0 and base.shape[0] > 0:
         base = base.sample(frac=sample_frac_iqs, random_state=42)
@@ -308,6 +308,7 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
 
     # Cleanup
     del df_pre, df_post, variables, fig, axes
+
 
 
 
