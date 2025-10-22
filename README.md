@@ -1,7 +1,7 @@
 # Mastitis detection
 
 ##  Overview
-This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators in multi-source veterinary data.  
+This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators in multi-source biological data.  
 
 The system integrates four key steps:
 1. **Unified dataset construction** --> merging productive, reproductive, clinical, and anagraphic variables into a consistent dataset.  
