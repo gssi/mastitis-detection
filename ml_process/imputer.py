@@ -230,11 +230,11 @@ def clinical_impute_df(df: pd.DataFrame, hier1=IHG, hier2=PHG) -> pd.DataFrame:
     return df
 
 
-def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs: float = 0.05) -> None:
+def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs: float = 1.0) -> None:
     """
     Orchestrate the full imputation workflow:
       - Load dataset
-      - Build a baseline (complete cases) for IQS evaluation (optional sampling)
+      - Build a baseline for IQS evaluation (optional sampling)
       - Impute
       - Evaluate IQS (if sample large enough)
       - Save results
@@ -243,7 +243,7 @@ def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs
 
     # Build base (complete cases) for IQS evaluation
     base = df[CLINICAL_COLS]
-    if 0 < sample_frac_iqs < 1.0 and base.shape[0] > 0:
+    if 0 < sample_frac_iqs <= 1.0 and base.shape[0] > 0:
         base = base.sample(frac=sample_frac_iqs, random_state=42)
 
     logging.info("Starting imputation…")
@@ -308,5 +308,6 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
 
     # Cleanup
     del df_pre, df_post, variables, fig, axes
+
 
 
