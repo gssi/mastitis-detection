@@ -50,7 +50,7 @@ mammary_diseases_indicators/
 │ └── feature_summary.txt # Feature importance summary
 │
 │── temporary_datasets/ # Placeholder for intermediate datasets
-│ └── balanced_dataset.parquet # it's the balanced dataset ready for split -> classifcation -> post-hoc analysis (see the process_run.ipynb)
+│ └── balanced_dataset.parquet # it's the balanced dataset ready for split -> classifcation + post-hoc analysis (see the process_run.ipynb)
 │
 │── libraries.py # Shared utility functions
 │── process_run.ipynb # End-to-end Jupyter notebook for usage
