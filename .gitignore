@@ -1,9 +1,0 @@
-# Ignora il contenuto di datasets/
-temporary_datasets/*
-# Mantieni la cartella visibile in repo con un file segnaposto
-!temporary_datasets/.gitkeep
-
-# Python cache/temporanei
-__pycache__/
-*.py[cod]
-.ipynb_checkpoints/
