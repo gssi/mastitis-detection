@@ -160,7 +160,7 @@ def merge_main() -> None:
     # Cleanup
     del merged
     gc.collect()
-    log.info("### END MERGING PHASE ###")
+    log.info("END MERGING PHASE")
 
 
 # =========================
@@ -169,4 +169,5 @@ def merge_main() -> None:
 
 if __name__ == "__main__":
     merge_main()
+
 
