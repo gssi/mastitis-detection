@@ -1,16 +1,16 @@
-# Mammary Diseases Indicators 
+# Mastitis detection
 
 ##  Overview
-This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators using multi-source veterinary data.  
+This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators in multi-source veterinary data.  
 
 The system integrates four key steps:
-1. **Unified dataset construction** --> merging productive, reproductive, clinical, and environmental variables into a consistent dataset.  
+1. **Unified dataset construction** --> merging productive, reproductive, clinical, and anagraphic variables into a consistent dataset.  
 2. **Biology-guided data processing** --> applying imputation, transformations, and feature generation strategies grounded in biological plausibility.  
-3. **Classifier training** --> leveraging curated and balanced datasets to train multiple tree-based ensemble classifiers (Random Forest, LightGBM, CatBoost, XGBoost).  
+3. **Classifier training** --> leveraging curated and balanced dataset to train multiple tree-based ensemble classifiers (Random Forest, LightGBM, CatBoost, XGBoost).  
 4. **Post-hoc feature analysis** --> extracting a compact and interpretable set of predictors, useful for decision support and further research.  
 
 The system design follows four guiding principles:
-- **Model-agnostic consensus** --> evaluating agreement across multiple classifiers to support robust predictions.  
+- **Model consensus** --> evaluating agreement across multiple classifiers to support robust predictions.  
 - **Domain-aligned interpretability** --> selecting features that are biologically meaningful and comprehensible for veterinary practitioners.  
 - **Actionable decision support** --> producing outputs relevant for both farm-level intervention and scientific research.  
 - **Explainability-driven dimensionality reduction** --> enabling simplified, interpretable, and scalable deployment.
