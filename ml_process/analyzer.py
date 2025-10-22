@@ -116,7 +116,7 @@ def assemble_feature_summary(models, base_model_name, X_test, y_test, top_n=20):
         print(f"[SHAP Interaction] Warning: {e}")
         feature_combo_final = ["n/a"] * len(common_features)
 
-    # --- Final summary table ---
+    # Final summary table 
     feature_summary = pd.DataFrame({
         'Feature': common_features,
         'Importance': fi_series.values,
@@ -147,5 +147,6 @@ def save_feature_summary_txt(feature_summary: pd.DataFrame, file_path: Path):
             f.write(f"{row['Feature']:<25}{row['Importance']:<15.4f}{row['Feature Combo']}\n")
 
     print(f"Feature summary saved to: {file_path}")
+
 
 
