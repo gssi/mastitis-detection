@@ -93,11 +93,11 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
     - Uses a fixed random_state (42) for reproducibility.
     - If a positive stratum lacks negatives, that stratum contributes only positives.
     """
-    # ---- Load and temporal validity
+    # Load and temporal validity
     df_wide = pd.read_parquet(input_path).copy()
     df_wide['sequenza_valida'] = check_temporal_sequence_vectorized(df_wide)
 
-    # ---- Positives: first-onset mastitis with valid sequence, not flagged healthy
+    # Positives: first-onset mastitis with valid sequence, not flagged healthy
     positivi = df_wide[
         (df_wide['mastitis'] == 1) &
         (df_wide['mastitis_t-1'] == 0) &
@@ -182,4 +182,5 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         del negativi_finali
     del conteggio_strati, campioni_negativi, age_cols, fase_cols
     gc.collect()
+
 
