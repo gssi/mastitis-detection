@@ -119,7 +119,7 @@ def merge_main() -> None:
     3) INNER join with ana_agg on [id].
     4) Save Parquet output and free memory.
     """
-    log.info("### START MERGING PHASE ###")
+    log.info("START MERGING PHASE...")
 
     # Step 1: LEFT join on daily keys
     log.info("Step 1 – LEFT join between cf_agg, ltts_agg, ce_agg on keys [id, day, month, year]")
@@ -169,5 +169,6 @@ def merge_main() -> None:
 
 if __name__ == "__main__":
     merge_main()
+
 
 
