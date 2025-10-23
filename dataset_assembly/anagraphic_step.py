@@ -44,12 +44,12 @@ RENAME_MAP = {
     "DataNascita": "birth_date",
 }
 
-
 # =========================
 # MAIN FUNCTION
 # =========================
 
 def ana_main():
+    
     """
     Extract, filter, and validate animal registry (anagraphic) data.
 
@@ -63,11 +63,11 @@ def ana_main():
     Output:
     - A Parquet file with two columns: ['id', 'birth_date'].
     """
+    
     # Load IDs from functional check
     log.info("Starting elaboration...")
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional check: %d", len(ids_cf))
-
     # Load anagraphic data
     log.info("Loading anagraphic data from %s", RAW_ANA_CSV)
     df = pd.read_csv(
@@ -77,25 +77,19 @@ def ana_main():
         usecols=lambda c: c
         not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"},
     )
-
     # Keep only animals present in the functional check
     df = df[df["idAnimale"].isin(ids_cf)]
     log.info("Data extracted: %s rows, %s columns", f"{df.shape[0]:,}", df.shape[1])
-
     # Birth date cleaning
     df["DataNascita"] = pd.to_datetime(df["DataNascita"], errors="coerce")
     df = df[df["DataNascita"].notna()]
-
     # Keep plausible years only (2018–2022)
     df = df[(df["DataNascita"].dt.year > 2017) & (df["DataNascita"].dt.year < 2023)]
-
     # Remove duplicates and enforce consistent type
     df = df.drop_duplicates()
     df["idAnimale"] = df["idAnimale"].astype("int64")
-
     # Aggregate per animal: earliest birth date (safety check)
     nascita_agg = df.groupby("idAnimale", as_index=False)["DataNascita"].min()
-
     # Re-merge to ensure one row per unique animal
     nascita_agg = pd.merge(
         nascita_agg,
@@ -103,18 +97,15 @@ def ana_main():
         on="idAnimale",
         how="left",
     )
-
     # Check for consistency: keep only animals with exactly one valid birth date
     conteggio = nascita_agg["idAnimale"].value_counts()
     id_unici = conteggio[conteggio == 1].index
     nascita_agg = nascita_agg[nascita_agg["idAnimale"].isin(id_unici)]
     log.info("Valid animals: %d", len(nascita_agg))
-
     # Save final dataset
     nascita_agg = nascita_agg.rename(columns=RENAME_MAP)
     nascita_agg.to_parquet(OUTPUT_PARQUET, index=False)
     log.info("File saved ➔ %s (%d rows)", OUTPUT_PARQUET, len(nascita_agg))
-
     # Cleanup
     del df, nascita_agg, conteggio, id_unici
     gc.collect()
@@ -126,4 +117,5 @@ def ana_main():
 
 if __name__ == "__main__":
     ana_main()
+
 
