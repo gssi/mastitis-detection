@@ -3,7 +3,7 @@ Lactose (Lattosio) pipeline.
 
 This script:
 - Loads lactose measurements from CSV.
-- Restricts to animals present in the functional control (CF) universe.
+- Restricts to animals present in the functional control (CF) dataset.
 - Keeps recent years only (>2018), removes duplicates.
 - Fills missing lactose values from 'valoreMisura' when available.
 - Applies positivity and IQR-based outlier filtering.
@@ -154,3 +154,4 @@ def ltts_main() -> None:
 
 if __name__ == "__main__":
     ltts_main()
+
