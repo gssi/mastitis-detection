@@ -2,7 +2,7 @@
 Data pipeline for animal registry (Anagrafica).
 
 This script:
-- Loads animal registry records (anagrafica) from raw CSV.
+- Loads animal registry records (anagraphic) from raw CSV.
 - Keeps only animals present in the functional check dataset (cf_ids).
 - Filters birth dates for validity and reasonable years.
 - Resolves duplicates and enforces one unique birth date per animal.
@@ -51,7 +51,7 @@ RENAME_MAP = {
 
 def ana_main():
     """
-    Extract, filter, and validate animal registry (anagrafica) data.
+    Extract, filter, and validate animal registry (anagraphic) data.
 
     Steps:
     1) Load unique IDs from the functional check dataset (cf_ids).
@@ -126,3 +126,4 @@ def ana_main():
 
 if __name__ == "__main__":
     ana_main()
+
