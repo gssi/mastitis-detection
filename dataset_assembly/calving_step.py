@@ -3,9 +3,9 @@ Calving events pipeline.
 
 This script:
 - Loads raw calving records from CSV.
-- Keeps only animals present in the functional check (CF) universe.
+- Keeps only animals present in the functional check (CF) dataset.
 - Aggregates births per animal-day and collapses to at most one calving per month.
-- Applies plausibility filters (e.g., born counts < 3; remove empty events).
+- Applies plausibility filters (e.g., keep born counts < 3, remove empty events).
 - Logs per-animal calving counts before/after preprocessing for coherence checks.
 - Saves a compact Parquet dataset.
 
@@ -77,7 +77,7 @@ def count_parts(df: pd.DataFrame, label: str) -> pd.Series:
 def calving_main() -> None:
     """
     End-to-end processing of calving events:
-    1) Load CF IDs universe.
+    1) Load CF IDs.
     2) Load raw calving CSV; keep years > 2018 and deduplicate.
     3) Filter to CF animals, sort temporally.
     4) Aggregate per animal-day (sum male/female, live/dead).
@@ -108,7 +108,7 @@ def calving_main() -> None:
     # Stable temporal sort (mergesort preserves order on ties)
     df = df.sort_values(["idAnimale", "anno", "mese", "giorno"], kind="mergesort")
 
-    # Aggregate to per-animal-day totals (sex x vitality)
+    # Aggregate to per-animal-day totals (sex and vitality)
     df2 = df.groupby(
         ["idAnimale", "giorno", "mese", "anno"], observed=True, as_index=False
     ).agg({
@@ -190,3 +190,4 @@ def calving_main() -> None:
 
 if __name__ == "__main__":
     calving_main()
+
