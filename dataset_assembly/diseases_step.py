@@ -180,11 +180,11 @@ def treat_main(keep_all_years: bool = False) -> None:
     keep_all_years : bool, default False
         If True, skip the year filter; otherwise keep only year > 2019.
     """
-    # -------- CF IDs universe
+    # CF IDs 
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional check: %d", len(ids_cf))
 
-    # -------- Read raw treatments (mastitis only)
+    # Read raw treatments (mastitis only)
     cols = ["CAPO_IDENTIFICATIVO", "TIPODIAGNOSI_CODICE", "TRAT_DT_INIZIO"]
     df = pd.read_csv(
         RAW_CSV,
@@ -202,7 +202,7 @@ def treat_main(keep_all_years: bool = False) -> None:
     c0 = counts_per_animal(df)
     show_dist("Step 0 (raw)", c0)
 
-    # Parse with day-first format; drop unparseable
+    # Parse with day-first format and drop unparseable
     df["TRAT_DT_INIZIO_parsed"] = pd.to_datetime(df["TRAT_DT_INIZIO"], errors="coerce", dayfirst=True)
     parse_fail = df["TRAT_DT_INIZIO_parsed"].isna()
     ids_parse = set(df.loc[parse_fail, "CAPO_IDENTIFICATIVO"])
@@ -285,3 +285,4 @@ def treat_main(keep_all_years: bool = False) -> None:
 
 if __name__ == "__main__":
     treat_main()
+
