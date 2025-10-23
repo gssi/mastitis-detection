@@ -29,12 +29,12 @@ OUTPUT_PARQUET = (
     / "merged_dataset.parquet"
 )
 
-
 # =========================
 # HELPERS
 # =========================
 
 def unisci(lista_df, lista_chiavi, metodo):
+    
     """
     Safely merge multiple DataFrames on given keys, harmonizing dtypes.
 
@@ -67,25 +67,22 @@ def unisci(lista_df, lista_chiavi, metodo):
     ValueError
         If the merge result is empty (likely a join-key mismatch).
     """
+    
     if not lista_df:
         return pd.DataFrame()
-
     for chiave in lista_chiavi:
         tipi = []
         for df in lista_df:
             if chiave not in df.columns:
                 raise KeyError(f"Column '{chiave}' is not in all DataFrames.")
             tipi.append(df[chiave].dtype)
-
         tipo_names = [t.name for t in tipi]
-
         # Categorical or string-like -> cast everything to string
         if any(t.name == "category" for t in tipi) or ("object" in tipo_names or "string" in tipo_names):
             for i, df in enumerate(lista_df):
                 lista_df[i] = df.copy()
                 lista_df[i][chiave] = df[chiave].astype(str)
             continue
-
         # All numeric -> promote to a common numeric dtype
         if all(np.issubdtype(t, np.number) for t in tipi):
             tipo_comune = tipi[0]
@@ -95,21 +92,19 @@ def unisci(lista_df, lista_chiavi, metodo):
                 lista_df[i] = df.copy()
                 lista_df[i][chiave] = df[chiave].astype(tipo_comune)
             continue
-
         # Mixed / unsupported types
         raise TypeError(f"Not compatible types for '{chiave}': {tipo_names}")
-
     merged_df = reduce(lambda left, right: pd.merge(left, right, on=lista_chiavi, how=metodo), lista_df)
     if merged_df.empty:
         raise ValueError("Join step created an empty DataFrame: please, check.")
     return merged_df
-
 
 # =========================
 # MAIN
 # =========================
 
 def merge_main() -> None:
+    
     """
     Build the final merged dataset by following the 3-step join plan.
 
@@ -119,8 +114,8 @@ def merge_main() -> None:
     3) INNER join with ana_agg on [id].
     4) Save Parquet output and free memory.
     """
+    
     log.info("START MERGING PHASE...")
-
     # Step 1: LEFT join on daily keys
     log.info("Step 1 – LEFT join between cf_agg, ltts_agg, ce_agg on keys [id, day, month, year]")
     step1 = unisci([
@@ -129,7 +124,6 @@ def merge_main() -> None:
         pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ce_agg.parquet"),
     ], ["id", "day", "month", "year"], "left")
     gc.collect()
-
     # Step 2: OUTER join on monthly keys (drop 'day')
     log.info("Step 2 – OUTER join with parti_agg and coppie_trat_agg on keys [id, month, year]")
     step2 = unisci([
@@ -139,7 +133,6 @@ def merge_main() -> None:
     ], ["id", "month", "year"], "outer")
     del step1
     gc.collect()
-
     # Step 3: INNER join with anagraphic info
     log.info("Step 3 – INNER join with ana_agg on keys [id]")
     merged = unisci([
@@ -148,7 +141,6 @@ def merge_main() -> None:
     ], ["id"], "inner")
     del step2
     gc.collect()
-
     # Save
     merged = merged.drop("Marca", axis=1, errors="ignore") # Drop 'Marca' column to keep only animal ID
     merged.to_parquet(OUTPUT_PARQUET, index=False)
@@ -156,7 +148,6 @@ def merge_main() -> None:
         "Merged dataset saved ➔ %s (%d rows, %d columns)",
         OUTPUT_PARQUET, len(merged), merged.shape[1]
     )
-
     # Cleanup
     del merged
     gc.collect()
@@ -169,6 +160,7 @@ def merge_main() -> None:
 
 if __name__ == "__main__":
     merge_main()
+
 
 
 
