@@ -30,6 +30,7 @@ from libraries import pd, np, log, gc, Path
 # =========================
 
 def pre_processing(input_path: Path, output_path: Path) -> None:
+   
     """
     Pre-filter and harmonize records prior to feature engineering.
 
@@ -55,62 +56,48 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
     -------
     None
     """
+   
     log.info("Starting pre-filtering from file: %s", input_path)
     df = pd.read_parquet(input_path)
-
     # Pre-calving filtering 
     # Stable temporal sort (mergesort preserves order on ties)
     df.sort_values(["id", "year", "month"], kind="mergesort", inplace=True)
-
     # Row index within each animal's timeline
     df["row_number"] = df.groupby("id").cumcount()
-
     # First observed calving row per animal (if any)
     primo_parto_riga = (df[df["calving"] == 1].groupby("id", observed=True)["row_number"].min())
-
     # Keep rows from first calving onwards (animals without calving are dropped)
     df = df[df["row_number"] >= df["id"].map(primo_parto_riga)].copy()
-
     # Calving: fill NaN -> 0 (integer)
     df["calving"] = df["calving"].fillna(0).astype(int)
-
     # Breed imputation (first non-null per animal) 
     breed_per_id = (df.loc[df["breed"].notna()].groupby("id", observed=True)["breed"].first())
     df["breed"] = df["breed"].fillna(df["id"].map(breed_per_id))
-
     # Keep only animals with at least one valid birth_date 
     id_con_birth = df.loc[df["birth_date"].notna(), "id"].unique()
     df = df[df["id"].isin(id_con_birth)].copy()
-
     # Birth_date imputation (first non-null per animal)
     birth_per_id = (df.loc[df["birth_date"].notna()].groupby("id", observed=True)["birth_date"].first())
     df["birth_date"] = df["birth_date"].fillna(df["id"].map(birth_per_id))
-
     # Calving coherence: propagate born/nborn within calving blocks 
     df["parto_blocco"] = df.groupby("id", observed=True)["calving"].cumsum().astype(int)
     df["chiave_blocco"] = list(zip(df["id"], df["parto_blocco"]))
-
     mask_calving = df["calving"] == 1
     blocchi_valori = (df.loc[mask_calving, ["chiave_blocco", "born", "nborn"]].drop_duplicates("chiave_blocco"))
-
     # Create maps (block -> values)
     born_map = dict(zip(blocchi_valori["chiave_blocco"], blocchi_valori["born"]))
     nborn_map = dict(zip(blocchi_valori["chiave_blocco"], blocchi_valori["nborn"]))
-
     # Assign to all rows in the same calving block
     df["born"] = df["chiave_blocco"].map(born_map)
     df["nborn"] = df["chiave_blocco"].map(nborn_map)
-
     # Clean up helper columns 
     df.drop(columns=["chiave_blocco"], inplace=True)
     df.drop(columns=["parto_blocco", "row_number"], errors="ignore", inplace=True)
     df.reset_index(drop=True, inplace=True)
     gc.collect()
-
     # Save
     df.to_parquet(output_path, index=False)
     log.info("File saved: %s (%d rows, %d columns)", output_path, len(df), df.shape[1])
-
     # Cleanup references for memory hygiene (optional)
     del df, born_map, nborn_map, blocchi_valori, mask_calving, primo_parto_riga, breed_per_id, id_con_birth
     gc.collect()
@@ -122,6 +109,7 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
 # =========================
 
 def dit(input_path: Path, output_path: Path) -> None:
+   
     """
     Apply domain-informed transformations to the cleaned dataset.
 
@@ -155,31 +143,25 @@ def dit(input_path: Path, output_path: Path) -> None:
     -------
     None
     """
+   
     # Load dataset
     df = pd.read_parquet(input_path)
-
     # Remove rows with missing breed (downstream models may expect it)
     df = df[df["breed"].notna()]
-
     # Ensure datetime consistency
     for col in ["birth_date", "cf_date", "t_date", "calving_date"]:
         df[col] = pd.to_datetime(df[col], errors="coerce")
-
     # Unified reference date (prefer cf_date, then calving_date, then t_date)
     reference_date = df["cf_date"].combine_first(df["calving_date"]).combine_first(df["t_date"])
-
     # HEALTHY label 
     ids_with_diagnosis = df.loc[df["diagnosis"].notna(), "id"].unique()
     df["scs"] = pd.to_numeric(df["scs"], errors="coerce")
-
     ids_with_high_scs = df.loc[df["scs"] > 5, "id"].unique()
     not_healthy_ids = set(ids_with_diagnosis).union(set(ids_with_high_scs))
     df["healthy"] = (~df["id"].isin(not_healthy_ids)).astype(int)
-
     # AGE (years) 
     # Floor division uses integer days/365; clip lower bound to 0
     df["age"] = ((reference_date - df["birth_date"]).dt.days // 365).clip(lower=0).astype(int)
-
     # SEASON 
     season_conditions = [
         df["month"].isin([12, 1, 2]),
@@ -189,19 +171,15 @@ def dit(input_path: Path, output_path: Path) -> None:
     ]
     season_labels = ["winter", "spring", "summer", "autumn"]
     df["season"] = np.select(season_conditions, season_labels, default=pd.NA)
-
     # LACTATION PHASE 
     # months_since_calving relative to the record month (1st day convention)
     df = df.sort_values(["id", "year", "month"], kind="mergesort")
     df["calving_date"] = pd.to_datetime(df["calving_date"])
     df = df.sort_values(["id", "year", "month"], kind="mergesort")
-
     df["last_calving_date"] = df.groupby("id")["calving_date"].ffill()
     df["record_date"] = pd.to_datetime(dict(year=df["year"], month=df["month"], day=1))
-
     df["months_since_calving"] = ((df["record_date"].dt.year - df["last_calving_date"].dt.year) * 12 + (df["record_date"].dt.month - df["last_calving_date"].dt.month))
     df.loc[df["last_calving_date"].isna(), "months_since_calving"] = pd.NA
-
     lactation_conditions = [
         df["months_since_calving"] == 0,
         df["months_since_calving"] == 1,
@@ -211,13 +189,10 @@ def dit(input_path: Path, output_path: Path) -> None:
     ]
     lactation_labels = ["peripartum", "early_lactation", "peak", "mid_lactation", "late_lactation"]
     df["lactation_phase"] = np.select(lactation_conditions, lactation_labels, default=pd.NA)
-
     # Drop helper columns
     df.drop(columns=["record_date", "last_calving_date"], inplace=True)
-
     # MASTITIS label 
     # Diagnosis + acceptable temporal windows 
-
     diagnosis_no_dates = (
         df["diagnosis"].notna()
         & df["cf_date"].isna()
@@ -238,19 +213,17 @@ def dit(input_path: Path, output_path: Path) -> None:
     )
     mastitis_mask_updated = (diagnosis_no_dates | cf_within_30_days | calving_within_30_days)
     df["mastitis"] = mastitis_mask_updated.fillna(False).astype(int)
-
     # Drop helper columns to reduce memory footprint
     df.drop(columns=["months_since_calving"], inplace=True)
-
     # Save result (require non-missing age)
     df = df.dropna(subset=["age"])
     df.to_parquet(output_path, index=False)
     log.info("File saved: %s (%d rows, %d columns)", output_path, len(df), df.shape[1])
-
     # Cleanup references to help GC (optional)
     del df, reference_date, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
 
 
