@@ -40,12 +40,12 @@ RENAME_MAP = {
     "anno": "year",
 }
 
-
 # =========================
 # HELPERS
 # =========================
 
 def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFrame:
+    
     """
     Apply Tukey's IQR rule to remove outliers on a numeric column.
 
@@ -63,6 +63,7 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     pd.DataFrame
         Filtered DataFrame (rows outside [Q1 - k*IQR, Q3 + k*IQR] are removed).
     """
+    
     q1 = df[col].quantile(0.25)
     q3 = df[col].quantile(0.75)
     iqr = q3 - q1
@@ -72,12 +73,12 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     log.info("IQR filter on '%s': %d ➔ %d records", col, before, len(df))
     return df
 
-
 # =========================
 # MAIN
 # =========================
 
 def ltts_main() -> None:
+    
     """
     End-to-end processing of lactose measurements.
 
@@ -90,10 +91,10 @@ def ltts_main() -> None:
     6) Aggregate to first measurement per animal-day.
     7) Save final Parquet.
     """
+    
     # CF IDs universe
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional control: %d", len(ids_cf))
-
     # Load lactose data and base filters
     df = pd.read_csv(
         RAW_LTTS_CSV,
@@ -101,48 +102,37 @@ def ltts_main() -> None:
         usecols=lambda c: c not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"},
     )
     df = df.query("anno > 2018").drop_duplicates()
-
     # Keep only animals present in CF universe
     df = df[df["idAnimale"].isin(ids_cf)]
     log.info("Uploaded data: %s rows, %s columns", f"{df.shape[0]:,}", df.shape[1])
-
     # Stable temporal sort (mergesort preserves order on ties)
     df = df.sort_values(["idAnimale", "anno", "mese", "giorno"], kind="mergesort")
-
     # Enforce integer types on keys
     df["idAnimale"] = df["idAnimale"].astype("int64")
     df["giorno"] = df["giorno"].astype("int64")
     df["mese"] = df["mese"].astype("int64")
     df["anno"] = df["anno"].astype("int64")
-
     # If an alternative value column exists, backfill missing primary values from it
     if "valoreMisura" in df.columns and df[VARIABILE].isna().sum() > 0:
         df[VARIABILE] = df[VARIABILE].fillna(df["valoreMisura"])
-
     # Keep valid positive lactose values only
     df = df[df[VARIABILE].notna() & (df[VARIABILE] > 0)]
-
     # Outlier removal via IQR
     df = IQR_filtering(df, VARIABILE)
-
     # Aggregate to one measurement per animal-day
     df_agg = df.groupby(
         ["idAnimale", "anno", "mese", "giorno"],
         observed=True,
         as_index=False
     ).agg({VARIABILE: "first"})
-
     # Free memory
     del df
     gc.collect()
-
     log.info("Aggregation completed – final rows: %s, columns: %s", f"{df_agg.shape[0]:,}", df_agg.shape[1])
-
     # Save final dataset
     df_agg = df_agg.rename(columns=RENAME_MAP)
     df_agg.to_parquet(OUTPUT_PARQUET, index=False)
     log.info("File saved ➔ %s (%d rows)", OUTPUT_PARQUET, len(df_agg))
-
     # Cleanup
     del df_agg
     gc.collect()
@@ -154,4 +144,5 @@ def ltts_main() -> None:
 
 if __name__ == "__main__":
     ltts_main()
+
 
