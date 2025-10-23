@@ -3,7 +3,7 @@ Milk Electrical Conductivity (EC) pipeline.
 
 This script:
 - Loads raw EC measurements from CSV.
-- Restricts to animals present in the functional check (CF) universe.
+- Restricts to animals present in the functional check (CF) dataset.
 - Cleans/normalizes date and ID fields, fills EC from fallback column when needed.
 - Removes non-positive/NaN values and applies IQR-based outlier filtering.
 - Aggregates to one EC value per animal-day (stable 'first' after sorting).
@@ -149,3 +149,4 @@ def ec_main() -> None:
 
 if __name__ == "__main__":
     ec_main()
+
