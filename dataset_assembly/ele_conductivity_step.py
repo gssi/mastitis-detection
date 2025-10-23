@@ -41,12 +41,12 @@ RENAME_MAP = {
     "anno": "year",
 }
 
-
 # =========================
 # HELPERS
 # =========================
 
 def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFrame:
+  
     """
     Apply Tukey's IQR rule to remove outliers on a numeric column.
 
@@ -64,6 +64,7 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     pd.DataFrame
         Filtered DataFrame (rows outside [Q1 - k*IQR, Q3 + k*IQR] are removed).
     """
+  
     q1 = df[col].quantile(0.25)
     q3 = df[col].quantile(0.75)
     iqr = q3 - q1
@@ -79,6 +80,7 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
 # =========================
 
 def ec_main() -> None:
+  
     """
     End-to-end processing of milk electrical conductivity (EC).
 
@@ -91,10 +93,10 @@ def ec_main() -> None:
     6) Aggregate to one record per animal-day (first after stable sort).
     7) Save Parquet output.
     """
-    # CF IDs universe
+  
+    # CF IDs 
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional check: %d", len(ids_cf))
-
     # Load raw EC data and base filters
     df = pd.read_csv(
         RAW_CE_CSV,
@@ -104,40 +106,31 @@ def ec_main() -> None:
     df = df.query("anno > 2018").drop_duplicates()
     df = df[df["idAnimale"].isin(ids_cf)]
     log.info("[1] Data loaded: %s rows, %s columns", f"{df.shape[0]:,}", df.shape[1])
-
     # Stable temporal sort and dtype normalization
     df = df.sort_values(["idAnimale", "anno", "mese", "giorno"], kind="mergesort")
     df["idAnimale"] = df["idAnimale"].astype("int64")
     df["giorno"] = df["giorno"].astype("int64")
     df["mese"] = df["mese"].astype("int64")
     df["anno"] = df["anno"].astype("int64")
-
     # Prefer explicit EC column; fallback to 'valoreMisura' when needed
     if "valoreMisura" in df.columns:
         df[VARIABILE] = df[VARIABILE].fillna(df["valoreMisura"])
-
     # Keep positive, non-missing EC values
     df = df[df[VARIABILE].notna() & (df[VARIABILE] > 0)]
-
     # Outlier removal
     df = IQR_filtering(df, VARIABILE)
-
     # Aggregate to one EC per animal-day
     df_agg = df.groupby(
         ["idAnimale", "anno", "mese", "giorno"], observed=True, as_index=False
     ).agg({VARIABILE: "first"})
-
     # Free memory
     del df
     gc.collect()
-
     log.info("Aggregation completed – final rows: %s, columns: %s", f"{df_agg.shape[0]:,}", df_agg.shape[1])
-
     # Save
     df_agg = df_agg.rename(columns=RENAME_MAP)
     df_agg.to_parquet(OUTPUT_PARQUET, index=False)
     log.info("File saved ➔ %s (%d rows)", OUTPUT_PARQUET, len(df_agg))
-
     # Cleanup
     del df_agg
     gc.collect()
@@ -149,4 +142,5 @@ def ec_main() -> None:
 
 if __name__ == "__main__":
     ec_main()
+
 
