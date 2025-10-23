@@ -86,7 +86,7 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
         return series
 
     # minimal per-group support to trust the group's median
-    min_group_n = 3  # tune to 2/4/5 depending on your desired locality vs stability
+    min_group_n = 3  # tune to 2/4/5 
 
     for grp in hier:
         if series.isna().sum() == 0:
@@ -169,7 +169,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
             continue
         x = x[m]
         y = y[m]
-        iqr = (x.quantile(0.75) - x.quantile(0.25)) + 1e-8
+        iqr = (x.quantile(0.75) - x.quantile(0.25)) + 1e-8 # 1e-8 to prevent division by zero
         dist = wasserstein_distance(x.values, y.values) / iqr
         wd[c] = float(dist)
 
@@ -308,6 +308,7 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
 
     # Cleanup
     del df_pre, df_post, variables, fig, axes
+
 
 
 
