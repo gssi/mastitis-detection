@@ -132,7 +132,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
 
     # Tuple strata to preserve full combinatorial structure
     negativi_puri['strato'] = list(zip(*[negativi_puri[col] for col in age_cols + fase_cols]))
-    positivi['strato']   = list(zip(*[positivi[col]     for col in age_cols + fase_cols]))
+    positivi['strato'] = list(zip(*[positivi[col] for col in age_cols + fase_cols]))
 
     # Count positives per stratum
     conteggio_strati = positivi['strato'].value_counts().to_dict()
@@ -145,12 +145,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         if subset_neg.empty:
             # No negatives available for this stratum; keep only positives here
             continue
-        campione = resample(
-            subset_neg,
-            replace=False,
-            n_samples=min(len(subset_neg), n_pos),
-            random_state=42,
-        )
+        campione = resample(subset_neg,replace=False,n_samples=min(len(subset_neg), n_pos),random_state=42)
         campioni_negativi.append(campione)
 
     if campioni_negativi:
@@ -173,8 +168,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         "Undersampling completed: total=%d  positives=%d  negatives=%d",
         len(df_bilanciato),
         int(df_bilanciato['mastitis'].sum()),
-        int((df_bilanciato['mastitis'] == 0).sum()),
-    )
+        int((df_bilanciato['mastitis'] == 0).sum()))
 
     # Cleanup
     del df_bilanciato, df_wide, positivi, negativi_puri
@@ -182,5 +176,6 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         del negativi_finali
     del conteggio_strati, campioni_negativi, age_cols, fase_cols
     gc.collect()
+
 
 
