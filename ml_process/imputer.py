@@ -291,6 +291,223 @@ def distribution_comparison(input_path: Path, output_path: Path, max_points: int
     del df_pre, df_post, variables, fig, axes
 
 
+def write_imputation_report(input_path: Path, output_path: Path,*, features: List[str] = CLINICAL_COLS, wd_thresh: float = 0.10,
+                            corr_thresh: float = 0.02, out_path: Path = Path("output/imputation_report.txt")) -> Path:
+
+    """
+    Generate a concise text report assessing whether imputation preserved
+    the statistical structure of the data.
+
+    The function compares the dataset BEFORE and AFTER imputation and
+    summarizes both global and factor-wise stability using two metrics:
+      • W/IQR  – normalized Wasserstein distance (distributional similarity)
+      • mean|Δρ| – mean absolute change in Pearson correlations (structural stability)
+
+    ----------------------------
+    Output contents
+    ----------------------------
+    1) **Overall results per feature**
+       For each clinical variable:
+         - %missing_pre  : missingness before imputation
+         - W/IQR         : distributional shift (≤ 0.10 acceptable)
+         - mean|Δρ|      : correlation shift (≤ 0.02 acceptable)
+
+       Also reports the global mean|Δρ| across all features and lists
+       any variables exceeding the thresholds.
+
+    2) **Factor-wise analyses**
+       Separate tables for each available factor:
+         - lactation_phase
+         - age
+         - season
+       Each table shows one row per level, with:
+         - n_rows
+         - mean_W/IQR  : average shift across features within that subgroup
+         - mean|Δρ|    : average correlation change within the subgroup
+         - % features exceeding each threshold
+
+       These summaries highlight whether deviations are global or phase/age/season-specific.
+
+    3) **Summary verdict**
+       A short statement confirming if both global criteria
+       (W/IQR ≤ 0.10 and mean|Δρ| ≤ 0.02) are satisfied.
+
+    ----------------------------
+    Returns
+    ----------------------------
+    Path : location of the generated .txt report (ready to attach to the paper).
+    """
+    
+    pre_df = pd.read_parquet(input_path)
+    post_df = pd.read_parquet(output_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Helpers 
+    def iqr(x: np.ndarray) -> float:
+        q1, q3 = np.nanpercentile(x, [25, 75])
+        d = q3 - q1
+        return float(d) if np.isfinite(d) and d > 0 else np.nan
+
+    def wasserstein_norm(a: np.ndarray, b: np.ndarray) -> float:
+        a = a[np.isfinite(a)]
+        b = b[np.isfinite(b)]
+        if a.size == 0 or b.size == 0:
+            return np.nan
+        d = wasserstein_distance(a, b)
+        i = iqr(a)  # normalize by PRE IQR (baseline-anchored)
+        return float(d / i) if np.isfinite(i) and i > 0 else np.nan
+
+    def pct_missing(s: pd.Series) -> float:
+        return 100.0 * s.isna().mean()
+
+    def pairwise_corr_delta_mean_abs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> tuple[float, pd.DataFrame]:
+        if not cols:
+            return np.nan, pd.DataFrame()
+        pre_c = pre[cols].astype(float).corr(method="pearson", min_periods=10)
+        post_c = post[cols].astype(float).corr(method="pearson", min_periods=10)
+        if pre_c.notna().sum().sum() == 0 or post_c.notna().sum().sum() == 0:
+            return np.nan, pd.DataFrame()
+        delta = (pre_c - post_c).abs()
+        tri = delta.where(np.triu(np.ones_like(delta, dtype=bool), 1))
+        return float(np.nanmean(tri.values)), delta
+
+    # Overall per-feature 
+    rows = []
+    for col in features:
+        pre_vals = pre_df[col].to_numpy(dtype=float)
+        post_vals = post_df[col].to_numpy(dtype=float)
+        rows.append({
+            "feature": col,
+            "pct_missing_pre": round(pct_missing(pre_df[col]), 2),
+            "pct_imputed": round(pct_missing(pre_df[col]), 2),
+            "wasserstein_norm": round(wasserstein_norm(pre_vals, post_vals), 4),
+        })
+    overall_df = pd.DataFrame(rows)
+
+    # Global correlation delta mean abs
+    idx = post_df.index
+    g_mean_delta, g_delta_mat = pairwise_corr_delta_mean_abs(pre_df.loc[idx], post_df.loc[idx], features)
+    per_feat_mean_abs = {}
+    if not g_delta_mat.empty:
+        for f in features:
+            others = [c for c in features if c != f]
+            per_feat_mean_abs[f] = float(g_delta_mat.loc[f, others].mean())
+    overall_df["pearson_corr_delta_mean_abs"] = overall_df["feature"].map(per_feat_mean_abs).round(4)
+    viol_w = overall_df.loc[overall_df["wasserstein_norm"] > wd_thresh, "feature"].tolist()
+    viol_rho = overall_df.loc[overall_df["pearson_corr_delta_mean_abs"] > corr_thresh, "feature"].tolist()
+
+    # Factor-wise strata 
+    factor_list = [("lactation_phase", "Phase"), ("age", "Age"), ("season", "Season")]
+    factor_sections = []
+    for key, title in factor_list:
+        if key not in post_df.columns:
+            continue
+        levels = post_df[key].astype("object").astype(str)
+        rows_sg = []
+        for lvl, idx_sg in levels.groupby(levels).groups.items():
+            idx_sg = pd.Index(idx_sg)
+            n_rows = int(len(idx_sg))
+            mean_delta_lvl, delta_mat_lvl = pairwise_corr_delta_mean_abs( pre_df.loc[idx_sg], post_df.loc[idx_sg], features)
+            w_vals, rho_vals, viol_w_cnt, viol_rho_cnt = [], [], 0, 0
+            for col in features:
+                w = wasserstein_norm(
+                    pre_df.loc[idx_sg, col].to_numpy(dtype=float),
+                    post_df.loc[idx_sg, col].to_numpy(dtype=float),
+                )
+                if np.isfinite(w):
+                    w_vals.append(w)
+                    if w > wd_thresh:
+                        viol_w_cnt += 1
+                per_feat = np.nan
+                if not delta_mat_lvl.empty and (col in delta_mat_lvl.index):
+                    others = [c for c in features if c != col and c in delta_mat_lvl.columns]
+                    if others:
+                        per_feat = float(delta_mat_lvl.loc[col, others].mean())
+                        if np.isfinite(per_feat):
+                            rho_vals.append(per_feat)
+                            if per_feat > corr_thresh:
+                                viol_rho_cnt += 1
+            mean_w = float(np.nanmean(w_vals)) if w_vals else np.nan
+            mean_rho = float(np.nanmean(rho_vals)) if rho_vals else np.nan
+            share_viol_w = (viol_w_cnt / len(features)) * 100 if len(features) else np.nan
+            share_viol_rho = (viol_rho_cnt / len(features)) * 100 if len(features) else np.nan
+            rows_sg.append({
+                "level": str(lvl),
+                "n_rows": n_rows,
+                "mean_WIQR": round(mean_w, 4) if np.isfinite(mean_w) else np.nan,
+                "mean_meanAbsDeltaR": round(mean_rho, 4) if np.isfinite(mean_rho) else np.nan,
+                "pct_feat_viol_WIQR": round(share_viol_w, 1) if np.isfinite(share_viol_w) else np.nan,
+                "pct_feat_viol_meanAbsDeltaR": round(share_viol_rho, 1) if np.isfinite(share_viol_rho) else np.nan,
+            })
+        sg_df = pd.DataFrame(rows_sg)
+        if not sg_df.empty:
+            sg_df = sg_df.sort_values(["pct_feat_viol_WIQR", "pct_feat_viol_meanAbsDeltaR", "mean_WIQR"], ascending=[False, False, False])
+        factor_sections.append((title, key, sg_df))
+
+    # Report (.txt)
+    lines = []
+    lines.append("IMPUTATION REPORT\n")
+    lines.append("\n")
+    lines.append("Metrics:\n")
+    lines.append(f"- Distributional similarity: Normalized Wasserstein distance (W/IQR) ≤ {wd_thresh}\n")
+    lines.append(f"- Multivariate preservation: mean absolute difference between correlation matrices (Pearson) ≤ {corr_thresh}\n\n")
+
+    # Overall
+    lines.append("1) Overall results per feature\n")
+    header = f"{'feature':<20}{'%missing_pre':>14}{'%imputed':>12}{'W/IQR':>12}{'mean|Δρ|':>12}"
+    lines.append(header)
+    lines.append("-" * len(header))
+    for _, r in overall_df.iterrows():
+        lines.append(
+            f"{str(r['feature']):<20}"
+            f"{r['pct_missing_pre']:>14.2f}"
+            f"{r['pct_imputed']:>12.2f}"
+            f"{(r['wasserstein_norm'] if pd.notna(r['wasserstein_norm']) else np.nan):>12.4f}"
+            f"{(r['pearson_corr_delta_mean_abs'] if pd.notna(r['pearson_corr_delta_mean_abs']) else np.nan):>12.4f}"
+        )
+    lines.append("\n")
+    if np.isfinite(g_mean_delta):
+        lines.append(f"Global mean |Δρ| (Pearson) over {len(features)} features: {g_mean_delta:.4f}\n")
+    else:
+        lines.append("Global mean |Δρ| (Pearson): not available (insufficient pairwise information).\n")
+    lines.append(f"Features exceeding W/IQR threshold: {viol_w if viol_w else 'none'}\n")
+    lines.append(f"Features exceeding mean |Δρ| threshold: {viol_rho if viol_rho else 'none'}\n")
+
+    # Factor-wise
+    lines.append("\n2) Factor-wise subgroup analysis (separate)\n")
+    for title, key, sg_df in factor_sections:
+        lines.append(f"\n– Subgroups by {title} [{key}]\n")
+        if sg_df is None or sg_df.empty:
+            lines.append("No eligible subgroups.\n")
+            continue
+        head = f"{'level':<24}{'n_rows':>10}{'mean_W/IQR':>14}{'mean|Δρ|':>12}{'%feat_viol_W':>14}{'%feat_viol_Δρ':>16}"
+        lines.append(head)
+        lines.append("-" * len(head))
+        for _, r in sg_df.iterrows():
+            lines.append(
+                f"{str(r['level']):<24}"
+                f"{int(r['n_rows']):>10}"
+                f"{(r['mean_WIQR'] if pd.notna(r['mean_WIQR']) else np.nan):>14.4f}"
+                f"{(r['mean_meanAbsDeltaR'] if pd.notna(r['mean_meanAbsDeltaR']) else np.nan):>12.4f}"
+                f"{(r['pct_feat_viol_WIQR'] if pd.notna(r['pct_feat_viol_WIQR']) else np.nan):>14}"
+                f"{(r['pct_feat_viol_meanAbsDeltaR'] if pd.notna(r['pct_feat_viol_meanAbsDeltaR']) else np.nan):>16}"
+            )
+        lines.append("")
+    ok_w = all(pd.isna(v) or v <= wd_thresh for v in overall_df["wasserstein_norm"])
+    ok_r = (np.isfinite(g_mean_delta) and g_mean_delta <= corr_thresh) and \
+           all(pd.isna(v) or v <= corr_thresh for v in overall_df["pearson_corr_delta_mean_abs"])
+    lines.append("\n3) Summary (global) verdict\n")
+    if ok_w and ok_r:
+        lines.append("Post-imputation distributions are consistent (W/IQR within threshold) and the correlation structure is preserved (mean |Δρ| within threshold).")
+    else:
+        lines.append("Some indicators exceed acceptance thresholds. Inspect factor-wise sections above.")
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+    logging.info("Imputation report written to: %s", str(out_path))
+
+    return out_path
+
+
+
 
 
 
