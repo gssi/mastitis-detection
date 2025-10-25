@@ -43,6 +43,7 @@ mammary_diseases_indicators/
 │ └── transformer.py # Data transformations
 │
 │── output/ # Generated results and reports
+| ├── imputation_report.txt # A quantitative report of imputation results
 │ ├── cat_report.txt # CatBoost performance report
 │ ├── lgbm_report.txt # LightGBM performance report
 │ ├── rf_report.txt # Random Forest performance report
