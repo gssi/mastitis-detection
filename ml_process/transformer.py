@@ -2,7 +2,9 @@
 Pre-processing and domain-informed transformations for the unified dairy dataset.
 
 This module provides two steps:
-1) `pre_processing`: row-level cleaning & harmonization before modeling.
+1) `pre_processing`: row-level cleaning.
+   - Imputes missing breed and birth_date per animal (first non-null).
+   - Derives 'age' (years) variable and filter to keep those animals with 2 <= age <= 6
    - Trims records to start from the first calving per animal.
    - Imputes missing breed and birth_date per animal (first non-null).
    - Enforces calving block coherence for 'born'/'nborn' within lactations.
@@ -10,7 +12,7 @@ This module provides two steps:
 2) `dit` (Domain-Informed Transformer):
    - Ensures datetime consistency and chooses a 'reference_date' (cf_date > calving_date > t_date).
    - Builds 'healthy' label (absence of diagnosis & SCS <= 5).
-   - Derives 'age', 'season', and 'lactation_phase' (months since last calving).
+   - Derives 'season', and 'lactation_phase' (months since last calving).
    - Flags mastitis events via diagnosis/date logic with 30-day windows.
 
 Outputs:
@@ -36,12 +38,14 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
 
     Steps
     -----
-    1) Sort by ['id','year','month'] with a stable order; compute row_number per animal.
-    2) Keep rows from the first observed calving (calving == 1) onward.
-    3) Fill missing 'calving' with 0 (int).
-    4) Impute 'breed' per animal using the first non-null value.
-    5) Keep only animals with at least one valid 'birth_date'; impute missing per animal.
-    6) Enforce calving-block coherence for 'born'/'nborn':
+    1) Keep only animals with at least one valid 'birth_date'; impute missing per animal.
+    2) Define the variable 'age' (years) as floor((reference_date - birth_date) / 365). Filter out rows with age ≤ 1 and >= 7.
+    3) Sort by ['id','year','month'] with a stable order; compute row_number per animal.
+    4) Keep rows from the first observed calving (calving == 1) onward.
+    5) Fill missing 'calving' with 0 (int).
+    6) Impute 'breed' per animal using the first non-null value.
+    7) Keep only animals with at least one valid 'birth_date'; impute missing per animal.
+    8) Enforce calving-block coherence for 'born'/'nborn':
        - Build cumulative calving counter within animal.
        - For each (animal, block) pair, propagate unique 'born'/'nborn' values.
 
@@ -59,6 +63,17 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
    
     log.info("Starting pre-filtering from file: %s", input_path)
     df = pd.read_parquet(input_path)
+    # Keep only animals with at least one valid birth_date 
+    id_con_birth = df.loc[df["birth_date"].notna(), "id"].unique()
+    df = df[df["id"].isin(id_con_birth)].copy()
+    # Birth_date imputation (first non-null per animal)
+    birth_per_id = (df.loc[df["birth_date"].notna()].groupby("id", observed=True)["birth_date"].first())
+    df["birth_date"] = df["birth_date"].fillna(df["id"].map(birth_per_id))
+    # Unified reference date (prefer cf_date, then calving_date, then t_date)
+    reference_date = df["cf_date"].combine_first(df["calving_date"]).combine_first(df["t_date"])
+    # AGE (years) 
+    df["age"] = ((reference_date - df["birth_date"]).dt.days // 365).clip(lower=0).astype(int)
+    df = df[(df["age"] > 1) & (df["age"] < 7)] # Remove rows with implausible age to have a functional check ( < 1 years) and those with 7-years bovine (10 rows)
     # Pre-calving filtering 
     # Stable temporal sort (mergesort preserves order on ties)
     df.sort_values(["id", "year", "month"], kind="mergesort", inplace=True)
@@ -99,7 +114,7 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
     df.to_parquet(output_path, index=False)
     log.info("File saved: %s (%d rows, %d columns)", output_path, len(df), df.shape[1])
     # Cleanup references for memory hygiene (optional)
-    del df, born_map, nborn_map, blocchi_valori, mask_calving, primo_parto_riga, breed_per_id, id_con_birth
+    del df, born_map, nborn_map, blocchi_valori, mask_calving, primo_parto_riga, breed_per_id, id_con_birth, reference_date
     gc.collect()
     log.info("Pre-processing completed.")
 
@@ -116,7 +131,6 @@ def dit(input_path: Path, output_path: Path) -> None:
     Features & Labels
     -----------------
     - 'healthy': 1 if no diagnosis AND SCS <= 5; 0 otherwise.
-    - 'age' (years): floor of (reference_date - birth_date) / 365.
     - 'season': based on 'month' (winter/spring/summer/autumn).
     - 'lactation_phase': derived from months since last calving.
     - 'mastitis': diagnosis + temporal logic with 30-day windows,
@@ -124,13 +138,12 @@ def dit(input_path: Path, output_path: Path) -> None:
 
     Steps
     -----
-    1) Load and drop rows with missing 'breed' (model needs breed).
+    1) Load data.
     2) Coerce datetime columns ['birth_date','cf_date','t_date','calving_date'].
-    3) Build 'reference_date' = cf_date first, else calving_date, else t_date.
     4) Compute 'healthy' using diagnosis & SCS thresholds.
-    5) Derive 'age' (years), 'season', and 'lactation_phase'.
+    5) Derive 'season' and 'lactation_phase'.
     6) Compute 'mastitis' with diagnosis/date rules and ≤30-day windows.
-    7) Drop helper columns and rows with missing 'age', then save.
+    7) Save.
 
     Parameters
     ----------
@@ -151,17 +164,12 @@ def dit(input_path: Path, output_path: Path) -> None:
     # Ensure datetime consistency
     for col in ["birth_date", "cf_date", "t_date", "calving_date"]:
         df[col] = pd.to_datetime(df[col], errors="coerce")
-    # Unified reference date (prefer cf_date, then calving_date, then t_date)
-    reference_date = df["cf_date"].combine_first(df["calving_date"]).combine_first(df["t_date"])
     # HEALTHY label 
     ids_with_diagnosis = df.loc[df["diagnosis"].notna(), "id"].unique()
     df["scs"] = pd.to_numeric(df["scs"], errors="coerce")
     ids_with_high_scs = df.loc[df["scs"] > 5, "id"].unique()
     not_healthy_ids = set(ids_with_diagnosis).union(set(ids_with_high_scs))
     df["healthy"] = (~df["id"].isin(not_healthy_ids)).astype(int)
-    # AGE (years) 
-    # Floor division uses integer days/365; clip lower bound to 0
-    df["age"] = ((reference_date - df["birth_date"]).dt.days // 365).clip(lower=0).astype(int)
     # SEASON 
     season_conditions = [
         df["month"].isin([12, 1, 2]),
@@ -220,9 +228,10 @@ def dit(input_path: Path, output_path: Path) -> None:
     df.to_parquet(output_path, index=False)
     log.info("File saved: %s (%d rows, %d columns)", output_path, len(df), df.shape[1])
     # Cleanup references to help GC (optional)
-    del df, reference_date, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
+    del df, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
 
 
