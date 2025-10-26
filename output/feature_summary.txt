@@ -4,24 +4,23 @@ Total features listed: 20
 
 Feature                  Importance     Feature Combo
 ----------------------------------------------------------------------
-scs                      1.0000         fat, lactose, ec
-scs_t-1                  0.4176         scs, scs_t-2, fat
-scs_t-2                  0.3283         scs, scs_t-1, fat
-ec                       0.1278         scs, fat, age
-fat                      0.0916         scs, milk, ec
-milk                     0.0869         fat, scs, protein
-age                      0.0524         scs, ec, lactose
-season_autumn            0.0403         ec, age, scs
-lactose                  0.0374         scs, fat, ec
-protein                  0.0323         fat, milk, scs
-lactation_phase_late_lactation0.0311         milk, protein, ec
-lactation_phase_peripartum0.0262         scs, lactose, ec
-ec_t-1                   0.0214         ec, ec_t-2, milk
-ec_t-2                   0.0210         ec, ec_t-1, scs
-season_summer            0.0128         fat, ec, scs
-protein_t-2              0.0097         protein, scs, scs_t-2
-season_winter            0.0061         ec, fat, protein
-milk_t-2                 0.0060         milk, milk_t-1, ec
-lactation_phase_early_lactation0.0058         scs_t-1, scs, milk
-lactation_phase_peak     0.0055         scs, scs_t-2, fat
-
+scs                      1.0000         lactose, fat, scs_t-1
+scs_t-1                  0.4674         scs, scs_t-2, ec
+scs_t-2                  0.3061         scs, scs_t-1, ec
+ec                       0.1551         scs, fat, milk
+milk                     0.0906         fat, scs, protein
+fat                      0.0749         scs, milk, ec
+lactose                  0.0601         scs, fat, age
+age                      0.0525         scs, ec, lactose
+season_autumn            0.0315         ec, protein, ec_t-1
+protein                  0.0309         milk, fat, scs
+lactation_phase_late_lactation0.0206         ec, milk, fat
+lactation_phase_peripartum0.0195         scs, lactose, ec
+ec_t-2                   0.0194         ec_t-1, ec, age
+ec_t-1                   0.0152         ec, ec_t-2, age
+season_summer            0.0149         ec, fat, protein
+milk_t-1                 0.0093         milk, scs, fat
+season_spring            0.0062         ec, protein_t-1, scs
+lactose_t-2              0.0056         lactose, scs, protein_t-2
+lactose_t-1              0.0049         lactose, ec_t-1, ec
+protein_t-2              0.0046         protein, fat, ec_t-1
