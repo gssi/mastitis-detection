@@ -342,6 +342,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Helpers 
+                                
     def iqr(x: np.ndarray) -> float:
         q1, q3 = np.nanpercentile(x, [25, 75])
         d = q3 - q1
@@ -366,7 +367,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
         post_c = post[cols].astype(float).corr(method="pearson", min_periods=10)
         if pre_c.notna().sum().sum() == 0 or post_c.notna().sum().sum() == 0:
             return np.nan, pd.DataFrame()
-        delta = (pre_c - post_c).abs()
+        delta = (post_c - pre_c).abs()
         tri = delta.where(np.triu(np.ones_like(delta, dtype=bool), 1))
         return float(np.nanmean(tri.values)), delta
 
@@ -379,10 +380,8 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
             "feature": col,
             "pct_missing_pre": round(pct_missing(pre_df[col]), 2),
             "pct_imputed": round(pct_missing(pre_df[col]), 2),
-            "wasserstein_norm": round(wasserstein_norm(pre_vals, post_vals), 4),
-        })
+            "wasserstein_norm": round(wasserstein_norm(pre_vals, post_vals), 4)})
     overall_df = pd.DataFrame(rows)
-
     # Global correlation delta mean abs
     idx = post_df.index
     g_mean_delta, g_delta_mat = pairwise_corr_delta_mean_abs(pre_df.loc[idx], post_df.loc[idx], features)
@@ -394,7 +393,6 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     overall_df["pearson_corr_delta_mean_abs"] = overall_df["feature"].map(per_feat_mean_abs).round(4)
     viol_w = overall_df.loc[overall_df["wasserstein_norm"] > wd_thresh, "feature"].tolist()
     viol_rho = overall_df.loc[overall_df["pearson_corr_delta_mean_abs"] > corr_thresh, "feature"].tolist()
-
     # Factor-wise strata 
     factor_list = [("lactation_phase", "Phase"), ("age", "Age"), ("season", "Season")]
     factor_sections = []
@@ -411,8 +409,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
             for col in features:
                 w = wasserstein_norm(
                     pre_df.loc[idx_sg, col].to_numpy(dtype=float),
-                    post_df.loc[idx_sg, col].to_numpy(dtype=float),
-                )
+                    post_df.loc[idx_sg, col].to_numpy(dtype=float))
                 if np.isfinite(w):
                     w_vals.append(w)
                     if w > wd_thresh:
@@ -436,13 +433,11 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
                 "mean_WIQR": round(mean_w, 4) if np.isfinite(mean_w) else np.nan,
                 "mean_meanAbsDeltaR": round(mean_rho, 4) if np.isfinite(mean_rho) else np.nan,
                 "pct_feat_viol_WIQR": round(share_viol_w, 1) if np.isfinite(share_viol_w) else np.nan,
-                "pct_feat_viol_meanAbsDeltaR": round(share_viol_rho, 1) if np.isfinite(share_viol_rho) else np.nan,
-            })
+                "pct_feat_viol_meanAbsDeltaR": round(share_viol_rho, 1) if np.isfinite(share_viol_rho) else np.nan})
         sg_df = pd.DataFrame(rows_sg)
         if not sg_df.empty:
             sg_df = sg_df.sort_values(["pct_feat_viol_WIQR", "pct_feat_viol_meanAbsDeltaR", "mean_WIQR"], ascending=[False, False, False])
         factor_sections.append((title, key, sg_df))
-
     # Report (.txt)
     lines = []
     lines.append("IMPUTATION REPORT\n")
@@ -450,7 +445,6 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     lines.append("Metrics:\n")
     lines.append(f"- Distributional similarity: Normalized Wasserstein distance (W/IQR) ≤ {wd_thresh}\n")
     lines.append(f"- Multivariate preservation: mean absolute difference between correlation matrices (Pearson) ≤ {corr_thresh}\n\n")
-
     # Overall
     lines.append("1) Overall results per feature\n")
     header = f"{'feature':<20}{'%missing_pre':>14}{'%imputed':>12}{'W/IQR':>12}{'mean|Δρ|':>12}"
@@ -462,8 +456,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
             f"{r['pct_missing_pre']:>14.2f}"
             f"{r['pct_imputed']:>12.2f}"
             f"{(r['wasserstein_norm'] if pd.notna(r['wasserstein_norm']) else np.nan):>12.4f}"
-            f"{(r['pearson_corr_delta_mean_abs'] if pd.notna(r['pearson_corr_delta_mean_abs']) else np.nan):>12.4f}"
-        )
+            f"{(r['pearson_corr_delta_mean_abs'] if pd.notna(r['pearson_corr_delta_mean_abs']) else np.nan):>12.4f}")
     lines.append("\n")
     if np.isfinite(g_mean_delta):
         lines.append(f"Global mean |Δρ| (Pearson) over {len(features)} features: {g_mean_delta:.4f}\n")
@@ -471,7 +464,6 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
         lines.append("Global mean |Δρ| (Pearson): not available (insufficient pairwise information).\n")
     lines.append(f"Features exceeding W/IQR threshold: {viol_w if viol_w else 'none'}\n")
     lines.append(f"Features exceeding mean |Δρ| threshold: {viol_rho if viol_rho else 'none'}\n")
-
     # Factor-wise
     lines.append("\n2) Factor-wise subgroup analysis (separate)\n")
     for title, key, sg_df in factor_sections:
@@ -489,8 +481,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
                 f"{(r['mean_WIQR'] if pd.notna(r['mean_WIQR']) else np.nan):>14.4f}"
                 f"{(r['mean_meanAbsDeltaR'] if pd.notna(r['mean_meanAbsDeltaR']) else np.nan):>12.4f}"
                 f"{(r['pct_feat_viol_WIQR'] if pd.notna(r['pct_feat_viol_WIQR']) else np.nan):>14}"
-                f"{(r['pct_feat_viol_meanAbsDeltaR'] if pd.notna(r['pct_feat_viol_meanAbsDeltaR']) else np.nan):>16}"
-            )
+                f"{(r['pct_feat_viol_meanAbsDeltaR'] if pd.notna(r['pct_feat_viol_meanAbsDeltaR']) else np.nan):>16}")
         lines.append("")
     ok_w = all(pd.isna(v) or v <= wd_thresh for v in overall_df["wasserstein_norm"])
     ok_r = (np.isfinite(g_mean_delta) and g_mean_delta <= corr_thresh) and \
@@ -503,6 +494,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     out_path.write_text("\n".join(lines), encoding="utf-8")
     logging.info("Imputation report written to: %s", str(out_path))
     return out_path
+
 
 
 
