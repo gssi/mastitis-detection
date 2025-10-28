@@ -20,9 +20,9 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-# =========================
-# PATHS AND STATICS
-# =========================
+
+### PATHS AND STATICS ###
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_LTTS_CSV = PROJECT_ROOT / "db" / "lattosio" / "lattosio.csv"
@@ -40,9 +40,8 @@ RENAME_MAP = {
     "anno": "year",
 }
 
-# =========================
-# HELPERS
-# =========================
+
+### HELPERS ###
 
 def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFrame:
     
@@ -73,9 +72,8 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     log.info("IQR filter on '%s': %d ➔ %d records", col, before, len(df))
     return df
 
-# =========================
-# MAIN
-# =========================
+
+### MAIN ###
 
 def ltts_main() -> None:
     
@@ -138,11 +136,11 @@ def ltts_main() -> None:
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+### ENTRY POINT ###
+
 
 if __name__ == "__main__":
     ltts_main()
+
 
 
