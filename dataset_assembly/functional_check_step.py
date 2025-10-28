@@ -23,9 +23,8 @@ Notes for reviewers:
 
 from libraries import pd, Path, log, gc, Counter
 
-# =========================
-# PATHS AND STATICS
-# =========================
+
+### PATHS AND STATICS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,9 +61,8 @@ MAPPATURA_RAZZE = {
 # Keep only these breeds in the final dataset
 RAZZE_DI_INTERESSE = ["frisona", "pezzata", "meticcia", "bruna"]
 
-# =========================
-# FUNCTIONS
-# =========================
+
+### HELPERS ###
 
 def map_razza(series: pd.Series) -> pd.Series:
     
@@ -175,6 +173,8 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     return df
 
 
+### MAIN FUNCTION ###
+
 def cf_main() -> None:
     
     """
@@ -245,11 +245,10 @@ def cf_main() -> None:
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     cf_main()
+
 
 
