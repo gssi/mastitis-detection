@@ -7,9 +7,9 @@ This script:
 - Produces a single, analysis-ready Parquet file.
 
 Join plan:
-1) LEFT join:  cf_agg  ⟵ ltts_agg ⟵ ce_agg              on [id, day, month, year]
-2) OUTER join: (step1 without 'day') ⟷ parti_agg ⟷ coppie_trat_agg on [id, month, year]
-3) INNER join: (step2) ⟂ ana_agg                          on [id]   (to keep animals with valid anagraphic info)
+1) LEFT join:  cf_agg <- ltts_agg <- ce_agg   on [id, day, month, year]
+2) OUTER join: (step1 without 'day') <-> parti_agg <-> coppie_trat_agg    on [id, month, year]
+3) INNER join: (step2) x ana_agg   on [id]  
 
 Output:
 - merged_dataset.parquet
@@ -17,9 +17,8 @@ Output:
 
 from libraries import Path, log, pd, gc, np, reduce
 
-# =========================
-# PATHS AND STATICS
-# =========================
+
+### PATHS AND STATICS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_PARQUET = (
@@ -29,9 +28,8 @@ OUTPUT_PARQUET = (
     / "merged_dataset.parquet"
 )
 
-# =========================
-# HELPERS
-# =========================
+
+### HELPERS ###
 
 def unisci(lista_df, lista_chiavi, metodo):
     
@@ -99,9 +97,8 @@ def unisci(lista_df, lista_chiavi, metodo):
         raise ValueError("Join step created an empty DataFrame: please, check.")
     return merged_df
 
-# =========================
-# MAIN
-# =========================
+
+### MAIN ###
 
 def merge_main() -> None:
     
@@ -146,20 +143,17 @@ def merge_main() -> None:
     merged.to_parquet(OUTPUT_PARQUET, index=False)
     log.info(
         "Merged dataset saved ➔ %s (%d rows, %d columns)",
-        OUTPUT_PARQUET, len(merged), merged.shape[1]
-    )
+        OUTPUT_PARQUET, len(merged), merged.shape[1])
     # Cleanup
     del merged
     gc.collect()
     log.info("END MERGING PHASE")
 
-
-# =========================
-# ENTRY POINT
-# =========================
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     merge_main()
+
 
 
 
