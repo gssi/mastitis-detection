@@ -13,14 +13,14 @@ Main functionalities:
 - clinical_impute_df: wrapper to impute clinical columns using predefined hierarchies.
 - run_clinical_imputation: full workflow from IO to IQS evaluation and saving.
 - distribution_comparison: KDE plots to visually compare pre/post distributions.
+- write_imputation_report: it gives in output the report containing the measures related to the difference between distributions pre- and post-imputation.
 """
 
 from libraries import pd, Path, logging, wasserstein_distance, List, Dict, time, sns, plt, np
 from collections import defaultdict
 
-# =========================
-# STATIC VARIABLES
-# =========================
+
+### STATIC VARIABLES ###
 
 # Clinical variables to impute
 CLINICAL_COLS = ["scs", "milk", "protein", "fat", "lactose", "ec"]
@@ -52,9 +52,8 @@ PHG = [
 ]
 
 
-# =========================
-# FUNCTIONS
-# =========================
+
+### FUNCTIONS ###
 
 def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: Dict[str, List[str]]) -> pd.Series:
     
@@ -79,14 +78,14 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
 
     Notes
     -----
-    - Groups with very few observations are skipped using a **per-group** support threshold (default: ≥3).
+    - Groups with very few observations are skipped using a "per-group" support threshold (default: ≥3).
     - Only groups whose keys are fully present in df are attempted.
     """
     
     series = df[col].copy()
     if series.isna().sum() == 0:
         return series
-    # minimal per-group support to trust the group's median
+    # minimal per-group support to trust the group median
     min_group_n = 3  # tune to 2/4/5 
     for grp in hier:
         if series.isna().sum() == 0:
@@ -239,7 +238,7 @@ def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs
         base = base.sample(frac=sample_frac_iqs, random_state=42)
     logging.info("Starting imputation…")
     df_imp = clinical_impute_df(df)
-    # IQS evaluation only if we have enough complete cases
+    # IQS evaluation only if we have enough cases
     if base.shape[0] > 100:
         logging.info("Evaluating IQS…")
         iqs = _iqs(base, df_imp.loc[base.index, CLINICAL_COLS], CLINICAL_COLS)
@@ -300,22 +299,22 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
 
     The function compares the dataset BEFORE and AFTER imputation and
     summarizes both global and factor-wise stability using two metrics:
-      • W/IQR  – normalized Wasserstein distance (distributional similarity)
-      • mean|Δρ| – mean absolute change in Pearson correlations (structural stability)
+    - W/IQR  –> normalized Wasserstein distance (distributional similarity)
+    - mean|Δρ| –> mean absolute change in Pearson correlations (structural stability)
 
     ----------------------------
     Output contents
     ----------------------------
-    1) **Overall results per feature**
+    1) Overall results per feature
        For each clinical variable:
          - %missing_pre  : missingness before imputation
-         - W/IQR         : distributional shift (≤ 0.10 acceptable)
-         - mean|Δρ|      : correlation shift (≤ 0.02 acceptable)
+         - W/IQR         : distributional shift (≤ 0.10 ideal)
+         - mean|Δρ|      : correlation shift (≤ 0.02 ideal)
 
        Also reports the global mean|Δρ| across all features and lists
        any variables exceeding the thresholds.
 
-    2) **Factor-wise analyses**
+    2) Factor-wise analyses
        Separate tables for each available factor:
          - lactation_phase
          - age
@@ -328,14 +327,14 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
 
        These summaries highlight whether deviations are global or phase/age/season-specific.
 
-    3) **Summary verdict**
+    3) Summary verdict
        A short statement confirming if both global criteria
        (W/IQR ≤ 0.10 and mean|Δρ| ≤ 0.02) are satisfied.
 
     ----------------------------
     Returns
     ----------------------------
-    Path : location of the generated .txt report (ready to attach to the paper).
+    Path : location of the generated .txt report.
     """
     
     pre_df = pd.read_parquet(input_path)
@@ -354,7 +353,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
         if a.size == 0 or b.size == 0:
             return np.nan
         d = wasserstein_distance(a, b)
-        i = iqr(a)  # normalize by PRE IQR (baseline-anchored)
+        i = iqr(a)  
         return float(d / i) if np.isfinite(i) and i > 0 else np.nan
 
     def pct_missing(s: pd.Series) -> float:
@@ -503,8 +502,8 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
         lines.append("Some indicators exceed acceptance thresholds. Inspect factor-wise sections above.")
     out_path.write_text("\n".join(lines), encoding="utf-8")
     logging.info("Imputation report written to: %s", str(out_path))
-
     return out_path
+
 
 
 
