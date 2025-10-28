@@ -26,10 +26,7 @@ Notes for reviewers:
 
 from libraries import pd, np, log, gc, Path
 
-
-# =========================
-# PRE-PROCESSING
-# =========================
+### PRE-PROCESSING ###
 
 def pre_processing(input_path: Path, output_path: Path) -> None:
    
@@ -119,9 +116,8 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
     log.info("Pre-processing completed.")
 
 
-# =========================
-# DOMAIN-INFORMED TRANSFORMER
-# =========================
+
+### DOMAIN-INFORMED TRANSFORMER ###
 
 def dit(input_path: Path, output_path: Path) -> None:
    
@@ -231,6 +227,7 @@ def dit(input_path: Path, output_path: Path) -> None:
     del df, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
 
 
