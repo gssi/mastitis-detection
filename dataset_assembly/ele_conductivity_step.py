@@ -20,9 +20,9 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-# =========================
-# PATHS AND STATICS
-# =========================
+
+### PATHS AND STATICS ###
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_CE_CSV = PROJECT_ROOT / "db" / "conducibilita_elettrica_latte" / "conducibilita_latte.csv"
@@ -41,9 +41,8 @@ RENAME_MAP = {
     "anno": "year",
 }
 
-# =========================
-# HELPERS
-# =========================
+
+### HELPERS ###
 
 def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFrame:
   
@@ -75,9 +74,8 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     return df
 
 
-# =========================
-# MAIN
-# =========================
+
+### MAIN ###
 
 def ec_main() -> None:
   
@@ -136,11 +134,11 @@ def ec_main() -> None:
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     ec_main()
+
 
 
