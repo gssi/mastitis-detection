@@ -19,9 +19,7 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-# =========================
-# PATHS AND STATICS
-# =========================
+### PATHS AND STATICS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_CSV = PROJECT_ROOT / "db" / "parto" / "parto.csv"
@@ -40,9 +38,8 @@ RENAME_MAP = {
     "Parto": "calving",
 }
 
-# =========================
-# FUNCTIONS
-# =========================
+
+### FUNCTIONS ###
 
 def count_parts(df: pd.DataFrame, label: str) -> pd.Series:
     
@@ -70,9 +67,8 @@ def count_parts(df: pd.DataFrame, label: str) -> pd.Series:
     log.info("Parts distributions[%s] – min:%d  median:%d  max:%d", label, cmin, cmed, cmax)
     return counts
 
-# =========================
-# MAIN
-# =========================
+
+### MAIN ###
 
 def calving_main() -> None:
     
@@ -170,11 +166,11 @@ def calving_main() -> None:
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     calving_main()
+
 
 
