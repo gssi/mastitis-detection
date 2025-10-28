@@ -18,9 +18,7 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-# =========================
-# PATHS AND CONSTANTS
-# =========================
+### PATHS AND CONSTANTS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -44,9 +42,8 @@ RENAME_MAP = {
     "DataNascita": "birth_date",
 }
 
-# =========================
-# MAIN FUNCTION
-# =========================
+
+### MAIN FUNCTION ###
 
 def ana_main():
     
@@ -111,11 +108,10 @@ def ana_main():
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     ana_main()
+
 
 
