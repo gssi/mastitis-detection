@@ -20,9 +20,8 @@ Outputs:
 
 from libraries import pd, Path, log, gc, reduce, np
 
-# =========================
-# PATHS AND STATICS
-# =========================
+
+### PATHS AND STATICS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_CSV = PROJECT_ROOT / "db" / "trattamenti" / "trattamenti.csv"
@@ -43,9 +42,8 @@ RENAME_MAP = {
     "anno": "year",
 }
 
-# =========================
-# HELPERS
-# =========================
+
+### HELPERS ###
 
 def counts_per_animal(df: pd.DataFrame) -> pd.Series:
     
@@ -156,9 +154,8 @@ def unisci(lista_df, lista_chiavi, metodo):
         raise ValueError("Join step created an empty dataframe: please, check.")
     return merged_df
 
-# =========================
-# MAIN
-# =========================
+
+### MAIN ###
 
 def treat_main(keep_all_years: bool = False) -> None:
     
@@ -262,11 +259,11 @@ def treat_main(keep_all_years: bool = False) -> None:
     gc.collect()
 
 
-# =========================
-# ENTRY POINT
-# =========================
+
+### ENTRY POINT ###
 
 if __name__ == "__main__":
     treat_main()
+
 
 
