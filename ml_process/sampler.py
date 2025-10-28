@@ -75,7 +75,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
     1) Load wide panel and mark temporal validity with `check_temporal_sequence_vectorized`.
     2) Define positives = first-onset mastitis (1,0,0) & not healthy & valid sequence.
     3) Define pure negatives = (0,0,0) & healthy & valid sequence.
-    4) Build strata = cartesian tuple of one-hot age_* and lactation_phase_* columns.
+    4) Build strata = cartesian tuple of age and one-hot lactation_phase_* columns.
     5) For each positive stratum, sample (without replacement) up to N_neg = N_pos negatives.
     6) Concatenate, drop helper columns, shuffle, and save to Parquet.
 
@@ -162,6 +162,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         del negativi_finali
     del conteggio_strati, campioni_negativi, age_cols, fase_cols
     gc.collect()
+
 
 
 
