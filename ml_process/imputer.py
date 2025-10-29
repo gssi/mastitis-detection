@@ -177,7 +177,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
     if common.sum() > 2:  # servono almeno 3 righe per corr
         pre_corr = pre.loc[common, cols].corr()
         post_corr = post.loc[common, cols].corr()
-        corr_diff = (pre_corr - post_corr).abs().mean().mean()
+        corr_diff = (post_corr - pre_corr).abs().mean().mean()
     else:
         corr_diff = np.inf
         logging.warning("IQS criterion #2 skipped: insufficient common complete rows (n=%d).",int(common.sum()))
@@ -494,6 +494,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     out_path.write_text("\n".join(lines), encoding="utf-8")
     logging.info("Imputation report written to: %s", str(out_path))
     return out_path
+
 
 
 
