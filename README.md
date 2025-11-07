@@ -24,7 +24,7 @@ The main contributions:
 
 ## Project structure
 ```
-mammary_diseases_indicators/
+mastitis-detection/
 │── classifier/ # Pre-trained ML models
 │ ├── cat_model.pkl # CatBoost trained model
 │ ├── lgbm_model.pkl # LightGBM trained model
