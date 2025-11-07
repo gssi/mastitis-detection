@@ -1,19 +1,25 @@
 # Mastitis detection
 
+## Abstract
+
+Mastitis is one of the most prevalent and costly diseases in dairy farming, with serious implications for animal welfare and farm sustainability. It causes a reduction in milk quantity and quality, financial losses for farmers, and increased risk of infection among herds. As prevention and monitoring become increasingly data-driven, understanding how diseases trigger and which biological indicators are most informative is essential to support effective and efficient prevention strategies. In our work, we present a modular machine learning-based approach to detect key predictors of clinical mastitis in dairy herds. In particular, we aim to address two research questions: (i) how effective are ensemble tree-based classifiers in detecting clinical mastitis and (ii) how post-hoc explainability techniques support feature space reduction while preserving predictive performance and supporting interpretability. We train and compare four ensemble classifiers (XGBoost, LightGBM, CatBoost, Random Forest), and we assess feature relevance by combining Permutation Feature Importance and SHAP interaction values techniques. Experiments on 41,104 monthly records show consistent performance across splits, with LightGBM reaching slightly higher scores across metrics. Moreover, we derive a compact feature subset through explainability analysis, which preserves predictive performance within 2\% of that obtained with the full feature space. Our findings suggest that ensemble tree classifiers trained on multi-source and heterogeneous biological data support reliable mastitis detection, and that explainability-driven feature selection promotes interpretability and scalable applications. 
+
+
+
 ##  Overview
-This project proposes a modular, machine learning–based, and biologically-informed system for detecting clinical mastitis–related indicators in multi-source biological data.  
+This project proposes a modular, machine learning–based, and biologically-informed approach to detect key indicators associated to clinical mastitis in multi-source and heterogeneous biological data. 
 
-The system integrates four key steps:
-1. **Unified dataset construction** --> merging productive, reproductive, clinical, and anagraphic variables into a consistent dataset.  
-2. **Biology-guided data processing** --> applying imputation, transformations, and feature generation strategies grounded in biological plausibility.  
-3. **Classifier training** --> leveraging balanced dataset to train multiple tree-based ensemble classifiers (Random Forest, LightGBM, CatBoost, XGBoost).  
-4. **Post-hoc feature analysis** --> extracting a compact and interpretable set of predictors, useful for decision support and further research.  
+The workflow is structured into four main steps:
+1. **Unified dataset construction** to merge productive, reproductive, clinical, and anagraphic variables into a consistent dataset.  
+2. **Biology-driven data processing** that includes imputation, transformations, and feature generation strategies grounded in biological plausibility.  
+3. **Training of tree-based ensemble classifiers** on balanced and structured dataset. 
+4. **Post-hoc feature analysis** to extract a compact and interpretable set of predictors, useful for scalable decision support system and further research.  
 
-The system design follows four guiding principles:
-- **Model consensus** --> evaluating agreement across multiple classifiers to support robust predictions.  
-- **Domain-aligned interpretability** --> selecting features that are biologically meaningful and comprehensible for veterinary practitioners.  
-- **Actionable decision support** --> producing outputs relevant for both farm-level intervention and scientific research.  
-- **Explainability-driven dimensionality reduction** --> supporting  simplified, interpretable, and scalable deployment.
+The main contributions:
+- **Identification of stable predictive patterns** using consensus feature ranking across models.
+- **Explainability-driven reduction of the feature space** to promote scalability.
+- **Generation of interpretable and actionable outputs** enabling effective on-farm decision-making.
+
 
 
 ## Project structure
