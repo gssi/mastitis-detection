@@ -71,16 +71,16 @@ mammary_diseases_indicators/
 
 This project has been tested with **Python 3.11.9+** on Windows 11 Pro.  
 Make sure you have `pip` available in your environment.
-You need Git to clone the repository directly. If you don’t have Git installed, you can:  
+Clone the repository directly through Git. If you don’t have Git installed, you can:  
   - [Download Git](https://git-scm.com/downloads) and install it, **or**  
   - Download the repository as a ZIP file from GitHub.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/davi94cs/mammary_diseases_indicators.git
+git clone https://github.com/gssi/mastitis-detection.git
 
 # 2. Move into the project folder
-cd mammary_diseases_indicators
+cd mastitis-detection
 
 # 3. (Recommended) Create a virtual environment (e.g. "my_venv")
 
