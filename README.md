@@ -16,7 +16,7 @@ The workflow is structured into four main steps:
 4. **Post-hoc feature analysis** to extract a compact and interpretable set of predictors, useful for scalable decision support system and further research.  
 
 The main contributions:
-- **Identification of stable predictive patterns** using consensus feature ranking across models.
+- **Identification of predictive patterns** using consensus feature ranking across models.
 - **Explainability-driven reduction of the feature space** to promote scalability.
 - **Generation of interpretable and actionable outputs** enabling effective on-farm decision-making.
 
@@ -40,13 +40,13 @@ mastitis-detection/
 │ └── lactose_step.py # Process lactose concentration data
 │
 │── ml_process/ # Machine learning workflow
-│ ├── analyzer.py # Analyze model results and metrics
+│ ├── analyzer.py # Post-hoc analysis 
 │ ├── classifier_module.py # Train and evaluate ML classifiers
 │ ├── dataset_assembly.py # Assemble datasets from different sources
-│ ├── feature_engineer.py # Feature extraction and engineering
-│ ├── imputer.py # Missing value imputation strategies
+│ ├── feature_engineer.py # Feature engineering (temporal windows-based) 
+│ ├── imputer.py # Missing value imputation 
 │ ├── sampler.py # Data sampling / balancing
-│ └── transformer.py # Data transformations
+│ └── transformer.py # Biological-based data construction
 │
 │── output/ # Generated results and reports
 | ├── imputation_report.txt # A quantitative report of imputation results
@@ -54,7 +54,7 @@ mastitis-detection/
 │ ├── lgbm_report.txt # LightGBM performance report
 │ ├── rf_report.txt # Random Forest performance report
 │ ├── xgb_report.txt # XGBoost performance report
-│ └── feature_summary.txt # Feature importance summary
+│ └── feature_summary.txt # Table of key indicators found
 │
 │── temporary_datasets/ # Placeholder for intermediate datasets
 │ └── balanced_dataset.parquet # it's the balanced dataset ready for split -> classifcation + post-hoc analysis (see the process_run.ipynb)
