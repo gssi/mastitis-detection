@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Mastitis is one of the most prevalent and costly diseases in dairy farming, with serious implications for animal welfare and farm sustainability. It causes a reduction in milk quantity and quality, financial losses for farmers, and increased risk of infection among herds. As prevention and monitoring become increasingly data-driven, understanding how diseases trigger and which biological indicators are most informative is essential to support effective and efficient prevention strategies. In our work, we present a modular machine learning-based approach to detect key predictors of clinical mastitis in dairy herds. In particular, we aim to address two research questions: (i) how effective are ensemble tree-based classifiers in detecting clinical mastitis and (ii) how post-hoc explainability techniques support feature space reduction while preserving predictive performance and supporting interpretability. We train and compare four ensemble classifiers (XGBoost, LightGBM, CatBoost, Random Forest), and we assess feature relevance by combining Permutation Feature Importance and SHAP interaction values techniques. Experiments on 41,104 monthly records show consistent performance across splits, with LightGBM reaching slightly higher scores across metrics. Moreover, we derive a compact feature subset through explainability analysis, which preserves predictive performance within 2\% of that obtained with the full feature space. Our findings suggest that ensemble tree classifiers trained on multi-source and heterogeneous biological data support reliable mastitis detection, and that explainability-driven feature selection promotes interpretability and scalable applications. 
+Mastitis is one of the most prevalent and costly diseases in dairy farming, with serious implications for animal welfare and farm sustainability. It causes a reduction in milk quantity and quality, resulting in financial losses for farmers and an increased risk of infection among herds. As prevention and monitoring become increasingly data-driven, understanding how diseases trigger and which biological indicators are most informative is crucial for supporting effective and efficient prevention strategies. In our work, we present a modular machine learning-based approach to detect key predictors of clinical mastitis in dairy herds. The main contributions are: (i) construction of a unified dataset integrating productive, reproductive, clinical, anagraphic, and time-windowed features derived from monthly records of Italian dairy herds; (ii) classification of clinical mastitis using ensemble tree-based classifiers; (iii) identification of patterns through consensus features ranking; (iv) explainability-driven feature space reduction. Experiments on 41,104 monthly records show consistent performance, with LightGBM achieving slightly higher scores across metrics (Accuracy = 88.3\%, Precision = 94.48\%, Recall = 81.62\%, F1-Score = 87.58\%). Moreover, we derive a compact feature subset which preserves predictive performance within 2\% of that obtained with the full feature space. Our findings suggest that ensemble tree classifiers trained on multi-source and heterogeneous biological data support reliable mastitis detection, and that explainability-driven feature selection promotes interpretability and scalable applications. 
 
 
 
@@ -85,7 +85,7 @@ cd mastitis-detection
 # On Windows (PowerShell)
 python -m venv my_venv
 
-# On Linux/macOS/WSL
+# On Linux/WSL
 python3 -m venv my_venv
 
 # NOTE for Linux/WSL users:
@@ -102,11 +102,11 @@ python3 -m venv my_venv
 # On Windows (PowerShell)
 my_venv\Scripts\activate
 
-# On Linux/macOS/WSL
+# On Linux/WSL
 source my_venv/bin/activate
 
 # 5. Install Python dependencies
-pip install -r requirements.txt   # use "pip3" if required on Linux/Mac
+pip install -r requirements.txt   # use "pip3" if required on Linux
 
 # (To deactivate the environment)
 deactivate
