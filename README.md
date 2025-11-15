@@ -16,8 +16,8 @@ The workflow is structured into four main steps:
 4. **Post-hoc feature analysis** to extract a compact and interpretable set of predictors, useful for scalable decision support system and further research.  
 
 The main contributions:
-- **Identification of predictive patterns** using consensus feature ranking across models.
-- **Explainability-driven reduction of the feature space** to promote scalability.
+- **Identification of predictive patterns** using consensus feature ranking.
+- **Explainability-driven reduction of the feature space** to promote scalability and low risk of overfitting.
 - **Generation of interpretable and actionable outputs** enabling effective on-farm decision-making.
 
 
