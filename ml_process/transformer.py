@@ -2,14 +2,14 @@
 Pre-processing and domain-informed transformations for the unified dairy dataset.
 
 This module provides two steps:
-1) `pre_processing`: row-level cleaning.
+1) pre_processing: row-level cleaning.
    - Imputes missing breed and birth_date per animal (first non-null).
    - Derives 'age' (years) variable and filter to keep those animals with 2 <= age <= 6
    - Trims records to start from the first calving per animal.
    - Imputes missing breed and birth_date per animal (first non-null).
    - Enforces calving block coherence for 'born'/'nborn' within lactations.
 
-2) `dit` (Domain-Informed Transformer):
+2) dit (Domain-Informed Transformer):
    - Ensures datetime consistency and chooses a 'reference_date' (cf_date > calving_date > t_date).
    - Builds 'healthy' label (absence of diagnosis & SCS <= 5).
    - Derives 'season', and 'lactation_phase' (months since last calving).
@@ -18,10 +18,10 @@ This module provides two steps:
 Outputs:
 - Both functions save a Parquet file with the transformed table and log shape summaries.
 
-Notes for reviewers:
+Notes:
 - 'First calving start' is enforced to avoid pre-parity noise.
 - Breed/birth_date imputations are per-animal first-observation fills.
-- Mastitis heuristic prioritizes CF date; falls back to calving date or missing-date diagnosis.
+- Mastitis heuristic prioritizes CF date. It falls back to calving date or missing-date diagnosis.
 """
 
 from libraries import pd, np, log, gc, Path
@@ -33,8 +33,8 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
     """
     Pre-filter and harmonize records prior to feature engineering.
 
-    Steps
-    -----
+    Steps:
+    
     1) Keep only animals with at least one valid 'birth_date'; impute missing per animal.
     2) Define the variable 'age' (years) as floor((reference_date - birth_date) / 365). Filter out rows with age ≤ 1 and >= 7.
     3) Sort by ['id','year','month'] with a stable order; compute row_number per animal.
@@ -46,16 +46,12 @@ def pre_processing(input_path: Path, output_path: Path) -> None:
        - Build cumulative calving counter within animal.
        - For each (animal, block) pair, propagate unique 'born'/'nborn' values.
 
-    Parameters
-    ----------
-    input_path : Path
-        Path to the input Parquet file.
-    output_path : Path
-        Path where the cleaned Parquet file will be saved.
+    Parameters:
+    
+    - input_path : Path ---> Path to the input Parquet file.
+    - output_path : Path ---> Path where the cleaned Parquet file will be saved.
 
-    Returns
-    -------
-    None
+    Returns None
     """
    
     log.info("Starting pre-filtering from file: %s", input_path)
@@ -124,16 +120,16 @@ def dit(input_path: Path, output_path: Path) -> None:
     """
     Apply domain-informed transformations to the cleaned dataset.
 
-    Features & Labels
-    -----------------
+    Features & Labels:
+    
     - 'healthy': 1 if no diagnosis AND SCS <= 5; 0 otherwise.
     - 'season': based on 'month' (winter/spring/summer/autumn).
     - 'lactation_phase': derived from months since last calving.
     - 'mastitis': diagnosis + temporal logic with 30-day windows,
       prioritizing CF date over calving date when both exist.
 
-    Steps
-    -----
+    Steps:
+    
     1) Load data.
     2) Coerce datetime columns ['birth_date','cf_date','t_date','calving_date'].
     4) Compute 'healthy' using diagnosis & SCS thresholds.
@@ -141,16 +137,12 @@ def dit(input_path: Path, output_path: Path) -> None:
     6) Compute 'mastitis' with diagnosis/date rules and ≤30-day windows.
     7) Save.
 
-    Parameters
-    ----------
-    input_path : Path
-        Path to the input Parquet file produced by pre_processing().
-    output_path : Path
-        Path where the transformed Parquet file will be saved.
+    Parameters:
+   
+    - input_path : Path ---> Path to the input Parquet file produced by pre_processing().
+    - output_path : Path ---> Path where the transformed Parquet file will be saved.
 
-    Returns
-    -------
-    None
+    Returns None
     """
    
     # Load dataset
@@ -227,6 +219,7 @@ def dit(input_path: Path, output_path: Path) -> None:
     del df, not_healthy_ids, ids_with_diagnosis, ids_with_high_scs
     gc.collect()
     log.info("Domain-Informed transformation completed.")
+
 
 
 
