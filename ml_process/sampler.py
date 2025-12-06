@@ -9,10 +9,8 @@ This module:
 - Shuffles and saves the balanced dataset to Parquet.
 
 Notes:
-- Temporal validity allows month rollovers (e.g., Dec→Jan) and relaxes month gaps
-  during peripartum/early-lactation windows (≤3 months instead of ≤1).
-- Negatives are sampled without replacement and capped by the number of positives
-  in each stratum to avoid class leakage and preserve structure.
+- Temporal validity allows month rollovers (e.g., Dec -> Jan) and relaxes month gaps during peripartum/early-lactation windows (≤3 months instead of ≤1).
+- Negatives are sampled without replacement and capped by the number of positives in each stratum to avoid class leakage and preserve structure.
 """
 
 from libraries import np, resample, pd, logging, gc, Path
@@ -25,22 +23,19 @@ def check_temporal_sequence_vectorized(df: pd.DataFrame) -> np.ndarray:
 
     A sequence is valid if:
     - Month differences (with 12-month rollover) are > 0 and ≤ max allowed gap:
-      * default ≤ 1;
-      * ≤ 3 if 'lactation_phase_peripartum' is active for (t vs t-1);
-      * ≤ 3 if 'lactation_phase_early_lactation' is active for (t-1 vs t-2).
+       - default ≤ 1;
+       - ≤ 3 if 'lactation_phase_peripartum' is active for (t vs t-1);
+       - ≤ 3 if 'lactation_phase_early_lactation' is active for (t-1 vs t-2).
     - Years are coherent with potential month rollovers (e.g., Jan(t) vs Dec(t-1)).
 
-    Parameters
-    ----------
+    Parameters:
+  
     df : pd.DataFrame
-        Must contain columns:
-        ['month', 'month_t-1', 'month_t-2', 'year', 'year_t-1', 'year_t-2',
-         'lactation_phase_peripartum', 'lactation_phase_early_lactation'].
+        - Must contain columns: ['month', 'month_t-1', 'month_t-2', 'year', 'year_t-1', 'year_t-2', 'lactation_phase_peripartum', 'lactation_phase_early_lactation'].
 
-    Returns
-    -------
-    np.ndarray
-        Boolean mask (length = len(df)) indicating valid sequences.
+    Returns:
+    
+    - np.ndarray --> Boolean mask (length = len(df)) indicating valid sequences.
     """
   
     m0 = df['month'].to_numpy()
@@ -79,15 +74,13 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
     5) For each positive stratum, sample (without replacement) up to N_neg = N_pos negatives.
     6) Concatenate, drop helper columns, shuffle, and save to Parquet.
 
-    Parameters
-    ----------
-    input_path : str
-        Path to the input Parquet with wide features and lagged targets.
-    output_path : str
-        Path where the balanced Parquet will be written.
+    Parameters:
+    
+    - input_path : str ---> Path to the input Parquet with wide features and lagged targets.
+    output_path : str ---> Path where the balanced Parquet will be written.
 
-    Notes
-    -----
+    Notes:
+    
     - Uses a fixed random_state (42) for reproducibility.
     - If a positive stratum lacks negatives, that stratum contributes only positives.
     """
@@ -162,6 +155,7 @@ def undersample_balanced(input_path: Path, output_path: Path) -> None:
         del negativi_finali
     del conteggio_strati, campioni_negativi, age_cols, fase_cols
     gc.collect()
+
 
 
 
