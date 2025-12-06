@@ -6,28 +6,22 @@ def get_permutation_importance(models, X_test, y_test, scoring='roc_auc', n_repe
     """
     Compute permutation importance for each model provided.
 
-    Parameters
-    ----------
-    models : dict[str, estimator]
-        Mapping {model_name: fitted_estimator}. Estimators must implement predict_proba
-        or decision_function compatible with the chosen 'scoring'.
-    X_test : pd.DataFrame
-        Test features (columns used for importance ranking).
-    y_test : pd.Series or array-like
-        True labels for the test set.
-    scoring : str, default 'roc_auc'
-        Scikit-learn scoring metric passed to permutation_importance.
-    n_repeats : int, default 10
-        Number of random shuffles per feature.
-    random_state : int, default 42
-        RNG seed for reproducibility.
+    Parameters:
+    
+    - models : dict[str, estimator]
+        - Mapping {model_name: fitted_estimator}. Estimators must implement predict_proba or decision_function compatible with the chosen 'scoring'.
+    - X_test : pd.DataFrame ---> Test features (columns used for importance ranking).
+    - y_test : pd.Series or array-like ---> True labels for the test set.
+    - scoring : str, default 'roc_auc' ---> Scikit-learn scoring metric passed to permutation_importance.
+    - n_repeats : int, default 10 ---> Number of random shuffles per feature.
+    - random_state : int, default 42 ---> RNG seed for reproducibility.
 
-    Returns
-    -------
+    Returns:
+    
     pd.DataFrame
-        DataFrame indexed by feature names; columns are model names.
-        Values are normalized importances (each column divided by its max).
-        Includes an extra column 'mean_importance' as the across-model average.
+        - DataFrame indexed by feature names; columns are model names.
+        - Values are normalized importances (each column divided by its max).
+        - it includes an extra column 'mean_importance' as the across-model average.
     """
     
     feature_importance = {}
@@ -52,28 +46,21 @@ def assemble_feature_summary(models, base_model_name, X_test, y_test, top_n=20):
     - Mean permutation importance across models.
     - Optional SHAP interaction-based "feature combo" for a base model.
 
-    Parameters
-    ----------
-    models : dict[str, estimator]
-        Mapping {model_name: fitted_estimator}. Estimators should be SHAP-compatible
-        (for interactions) if you want the combo column populated.
-    base_model_name : str
-        Key in 'models' used to compute SHAP interaction values.
-    X_test : pd.DataFrame
-        Test features (used both for permutation importance and SHAP).
-    y_test : pd.Series or array-like
-        True labels (used for permutation importance).
-    top_n : int, default 20
-        Number of top features (by mean permutation importance) to include.
+    Parameters:
+    
+    - models : dict[str, estimator] ---> Mapping {model_name: fitted_estimator}. Estimators should be SHAP-compatible (for interactions) if you want the combo column populated.
+    - base_model_name : str ---> Key in 'models' used to compute SHAP interaction values.
+    - X_test : pd.DataFrame ---> Test features (used both for permutation importance and SHAP).
+    - y_test : pd.Series or array-like ---> True labels (used for permutation importance).
+    - top_n : int, default 20 ---> Number of top features (by mean permutation importance) to include.
 
-    Returns
-    -------
+    Returns:
+   
     pd.DataFrame
         Columns:
           - 'Feature'        : feature name
           - 'Importance'     : mean permutation importance across models
-          - 'Feature Combo'  : top 3 features interacting (by mean |interaction|) with 'Feature'
-                               for the base model; 'n/a' if SHAP interactions are unavailable.
+          - 'Feature Combo'  : top 3 features interacting (by mean |interaction|) with 'Feature' for the base model
     """
     
     # Compute normalized permutation importance and pick the top_n features
@@ -122,12 +109,10 @@ def save_feature_summary_txt(feature_summary: pd.DataFrame, file_path: Path):
     """
     Save the feature summary DataFrame into a human-readable TXT file.
 
-    Parameters
-    ----------
-    feature_summary : pd.DataFrame
-        DataFrame with columns ['Feature', 'Importance', 'Feature Combo'].
-    file_path : str
-        Destination path for the TXT file.
+    Parameters:
+   
+    - feature_summary : pd.DataFrame ---> DataFrame with columns ['Feature', 'Importance', 'Feature Combo'].
+    - file_path : str ---> Destination path for the TXT file.
     """
     
     with open(file_path, "w", encoding="utf-8") as f:
@@ -139,6 +124,7 @@ def save_feature_summary_txt(feature_summary: pd.DataFrame, file_path: Path):
         for _, row in feature_summary.iterrows():
             f.write(f"{row['Feature']:<25}{row['Importance']:<15.4f}{row['Feature Combo']}\n")
     print(f"Feature summary saved to: {file_path}")
+
 
 
 
