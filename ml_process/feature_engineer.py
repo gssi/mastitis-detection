@@ -10,21 +10,18 @@ This module:
 - Saves a compact wide-format Parquet dataset.
 
 Intended use:
-- Downstream ML models needing fixed-size, lag-augmented feature vectors.
+- Lag-augmented feature vectors.
 """
 
 from libraries import pd, logging, Path
 
-# =========================
-# STATIC VARIABLES
-# =========================
+### STATIC VARIABLES ###
 
 # Base columns to lag; missing ones are ignored with a warning.
 WIDE_COLS = ["scs", "milk", "protein", "fat", "lactose", "ec", "mastitis", "month", "year"]
 
-# =========================
-# FUNCTIONS
-# =========================
+
+### FUNCTIONS ###
 
 def create_wide(input_path: Path,output_path: Path,lag_steps=None,id_col: str = "id",
     time_cols: tuple[str, str] = ("year", "month"),
@@ -33,29 +30,25 @@ def create_wide(input_path: Path,output_path: Path,lag_steps=None,id_col: str = 
     """
     Transform a longitudinal dataset into a wide, lag-augmented table.
 
-    Parameters
-    ----------
-    input_path : str
-        Path to input Parquet file.
-    output_path : str
-        Path where the wide-format Parquet will be written.
+    Parameters:
+   
+    input_path : str ---> Path to input Parquet file.
+    output_path : str ---> Path where the wide-format Parquet will be written.
     lag_steps : list[int] or None, optional
-        List of positive integers representing temporal lags to compute
-        within-animal (e.g., [1, 2]). If None, defaults to [1, 2].
+        - List of positive integers representing temporal lags to compute
+        - within-animal (e.g., [1, 2]). If None, defaults to [1, 2].
     id_col : str, default "id"
-        Column identifying the animal/subject.
+        - Column identifying the animal/subject.
     time_cols : tuple[str, str], default ("year", "month")
-        Tuple with (year_col, month_col) used to order records over time.
+        - Tuple with (year_col, month_col) used to order records over time.
     min_year : int, default 2020
-        Keep only rows with year_col >= min_year before final NA-drop.
+        - Keep only rows with year_col >= min_year before final NA-drop.
 
-    Notes
-    -----
+    Notes:
+    
     - Categorical one-hot: 'season', 'lactation_phase' (ignored if absent).
-    - Columns silently ignored on drop: ['cf_date', 'calving_date', 'calving',
-      'diagnosis', 't_date', 'birth_date', 'breed'].
-    - Rows with any NA after lag creation are removed to guarantee complete
-      feature vectors for modeling.
+    - Columns silently ignored on drop: ['cf_date', 'calving_date', 'calving', 'diagnosis', 't_date', 'birth_date', 'breed'].
+    - Rows with any NA after lag creation are removed to guarantee complete feature vectors for modeling.
     """
         
     # Defaults & basic validation
@@ -113,5 +106,6 @@ def create_wide(input_path: Path,output_path: Path,lag_steps=None,id_col: str = 
     logging.info("Feature engineering completed with %d rows and %d columns.", len(df), df.shape[1])
     # Cleanup 
     del df
+
 
 
