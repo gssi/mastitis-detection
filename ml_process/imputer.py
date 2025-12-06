@@ -60,24 +60,19 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
     """
     Impute a single column by progressively broader groupings (median per group).
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input data.
-    col : str
-        Column to impute.
-    hier : list[list[str]]
-        List of grouping strategies (from most specific to broadest).
-    log_map : dict[str, list[str]]
-        Collector for logging which levels were used per variable.
+    Parameters:
+    
+    - df : pd.DataFrame ---> input data.
+    - col : str ---> column to impute.
+    - hier : list[list[str]] ---> list of grouping strategies (from most specific to broadest).
+    - log_map : dict[str, list[str]] ---> collector for logging which levels were used per variable.
 
-    Returns
-    -------
-    pd.Series
-        A copy of the column with NAs imputed where possible.
+    Returns:
+    
+    - pd.Series ---> copy of the column with NAs imputed where possible.
 
-    Notes
-    -----
+    Notes:
+    
     - Groups with very few observations are skipped using a "per-group" support threshold (default: ≥3).
     - Only groups whose keys are fully present in df are attempted.
     """
@@ -113,7 +108,8 @@ def hierarchical_block(df: pd.DataFrame, cols: List[str], hier1: List[List[str]]
     Apply hierarchical imputation to multiple columns with sensible fallbacks.
 
     Strategy per column:
-      IHG (specific) → PHG (broader) → IHG (final attempt)
+    
+    IHG (specific) → PHG (broader) → IHG (final attempt)
     """
     
     imput_log = defaultdict(list)
@@ -142,10 +138,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
       2) Mean absolute correlation difference <= 0.02.
       3) No values outside plausible ranges.
 
-    Returns
-    -------
-    int
-        IQS in {0, 1, 2, 3}
+    Returns int(IQS in {0, 1, 2, 3})
     """
 
     score = 0
@@ -208,8 +201,7 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
 def clinical_impute_df(df: pd.DataFrame, hier1=IHG, hier2=PHG) -> pd.DataFrame:
     
     """
-    Wrapper to perform hierarchical imputation over CLINICAL_COLS
-    using the provided hierarchies (IHG, PHG).
+    Wrapper to perform hierarchical imputation over CLINICAL_COLS using the provided hierarchies (IHG, PHG).
     """
     
     logging.info("Starting hierarchical imputation…")
@@ -302,9 +294,9 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     - W/IQR  –> normalized Wasserstein distance (distributional similarity)
     - mean|Δρ| –> mean absolute change in Pearson correlations (structural stability)
 
-    ----------------------------
-    Output contents
-    ----------------------------
+    
+    Output contents:
+    
     1) Overall results per feature
        For each clinical variable:
          - %missing_pre  : missingness before imputation
@@ -331,10 +323,8 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
        A short statement confirming if both global criteria
        (W/IQR ≤ 0.10 and mean|Δρ| ≤ 0.02) are satisfied.
 
-    ----------------------------
-    Returns
-    ----------------------------
-    Path : location of the generated .txt report.
+    
+    Returns path of location of the generated .txt report.
     """
     
     pre_df = pd.read_parquet(input_path)
@@ -494,6 +484,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     out_path.write_text("\n".join(lines), encoding="utf-8")
     logging.info("Imputation report written to: %s", str(out_path))
     return out_path
+
 
 
 
