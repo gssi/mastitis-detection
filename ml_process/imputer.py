@@ -8,7 +8,7 @@ fallbacks and quality checks.
 
 Main functionalities:
 - apply_hierarchy: fill missing values using progressively broader groupings.
-- hierarchical_block: multi-variable imputation with IHG → PHG → IHG fallbacks.
+- hierarchical_block: multi-variable imputation with IHG -> PHG -> IHG fallbacks.
 - _iqs: imputation quality score (distributional shift, correlation preservation, range validity).
 - clinical_impute_df: wrapper to impute clinical columns using predefined hierarchies.
 - run_clinical_imputation: full workflow from IO to IQS evaluation and saving.
@@ -484,6 +484,7 @@ def write_imputation_report(input_path: Path, output_path: Path,*, features: Lis
     out_path.write_text("\n".join(lines), encoding="utf-8")
     logging.info("Imputation report written to: %s", str(out_path))
     return out_path
+
 
 
 
