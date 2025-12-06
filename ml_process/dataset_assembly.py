@@ -34,36 +34,23 @@ OUTPUT_PARQUET = (
 def unisci(lista_df, lista_chiavi, metodo):
     
     """
-    Safely merge multiple DataFrames on given keys, harmonizing dtypes.
-
-    For each key in 'lista_chiavi':
+    Safely merge multiple DataFrames on given keys, harmonizing dtypes. For each key in 'lista_chiavi':
+    
     - If any dtype is 'category' or any is 'object'/'string' -> cast all to str.
     - If all are numeric -> promote to a common numeric dtype (np.promote_types).
     - Otherwise raise TypeError.
     After harmonization, perform a chained merge via functools.reduce.
 
-    Parameters
-    ----------
-    lista_df : list[pd.DataFrame]
-        DataFrames to merge.
-    lista_chiavi : list[str]
-        Column names to merge on (must exist in all DataFrames).
-    metodo : {'inner','left','right','outer'}
-        Merge strategy passed to pd.merge.
+    PARAMETERS:
+    
+    - lista_df : list[pd.DataFrame] ---> DataFrames to merge.
+    - lista_chiavi : list[str] ---> Column names to merge on (must exist in all DataFrames).
+    - metodo : {'inner','left','right','outer'} ---> Merge strategy passed to pd.merge.
 
-    Returns
-    -------
-    pd.DataFrame
-        Merged DataFrame.
+    RETURNS:
+    
+    - pd.DataFrame ---> Merged DataFrame.
 
-    Raises
-    ------
-    KeyError
-        If any join key is missing in one of the DataFrames.
-    TypeError
-        If key dtypes are incompatible and cannot be harmonized.
-    ValueError
-        If the merge result is empty (likely a join-key mismatch).
     """
     
     if not lista_df:
@@ -153,6 +140,7 @@ def merge_main() -> None:
 
 if __name__ == "__main__":
     merge_main()
+
 
 
 
