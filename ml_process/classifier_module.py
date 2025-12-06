@@ -22,9 +22,7 @@ from libraries import (
 from pathlib import Path
 
 
-# =========================
-# DATA SPLIT
-# =========================
+### DATA SPLIT ###
 
 def split_by_animal(input_path: Path, target_col: str = 'mastitis',
                     test_size: float = 0.2, random_state: int = 42):
@@ -32,24 +30,19 @@ def split_by_animal(input_path: Path, target_col: str = 'mastitis',
     """
     Grouped (by animal ID) train/test split to prevent leakage.
 
-    Parameters
-    ----------
-    input_path : Path
-        Parquet path with features + target; must contain 'id' and `target_col`.
-    target_col : str, default 'mastitis'
-        Name of the binary target column.
-    test_size : float, default 0.2
-        Fraction of animals placed in the test set.
-    random_state : int, default 42
-        RNG seed for reproducibility.
+    Parameters:
+  
+    - input_path : Path ---> Parquet path with features + target; must contain 'id' and `target_col`.
+    -target_col : str, default 'mastitis' ---> Name of the binary target column.
+    - test_size : float, default 0.2 ---> Fraction of animals placed in the test set.
+    - random_state : int, default 42 ---> RNG seed for reproducibility.
 
-    Returns
-    -------
-    X_train, y_train, X_test, y_test : pd.DataFrame, pd.Series, pd.DataFrame, pd.Series
-        Feature matrices and targets for train and test sets.
+    Returns:
+    
+    X_train, y_train, X_test, y_test : pd.DataFrame, pd.Series, pd.DataFrame, pd.Series ---> Feature matrices and targets for train and test sets.
 
-    Notes
-    -----
+    Notes:
+    
     - Excludes obvious leakage columns (lags, date parts, id, healthy flags).
     """
                       
@@ -86,28 +79,21 @@ def split_by_animal(input_path: Path, target_col: str = 'mastitis',
     return X_train, y_train, X_test, y_test
 
 
-# =========================
-# GROUPED CV WRAPPER
-# =========================
+### REPEATED GROUP K-FOLD CV ###
 
 class RepeatedGroupKFoldWrapper:
   
     """
     Simple repeated K-fold over groups (animal IDs).
 
-    Shuffle the unique groups at each repeat; split into `n_splits` folds; yield
-    indices corresponding to train/test groups.
+    Shuffle the unique groups at each repeat, split into `n_splits` folds, and yield indices corresponding to train/test groups.
 
-    Parameters
-    ----------
-    groups : array-like
-        Group labels for each sample (length must match X).
-    n_splits : int, default 5
-        Number of folds.
-    n_repeats : int, default 3
-        Number of repetitions.
-    random_state : int, default 42
-        RNG seed for reproducibility.
+    Parameters:
+    
+    - groups : array-like ---> Group labels for each sample (length must match X).
+    - n_splits : int, default 5 ---> Number of folds.
+    - n_repeats : int, default 3 ---> Number of repetitions.
+    - random_state : int, default 42 ---> RNG seed for reproducibility.
     """
   
     def __init__(self, groups, n_splits: int = 5, n_repeats: int = 3, random_state: int = 42):
@@ -133,9 +119,8 @@ class RepeatedGroupKFoldWrapper:
         return self.n_splits * self.n_repeats
 
 
-# =========================
-# MODELS: XGB / RF / CAT / LGBM
-# =========================
+
+### MODELS: XGB / RF / CAT / LGBM ###
 
 def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
              X_test_scaled: pd.DataFrame, y_test: pd.Series, groups):
@@ -283,7 +268,7 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     lines.append("")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print(f" Metrics report saved to: {report_path}")
+    print(f"Metrics report saved to: {report_path}")
                
 
 def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
@@ -587,7 +572,7 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     lines.append("")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print(f"📄 Metrics report saved to: {report_path}")
+    print(f"Metrics report saved to: {report_path}")
                
 
 def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
@@ -746,27 +731,23 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     lines.append("")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print(f"📄 Metrics report saved to: {report_path}")
+    print(f"Metrics report saved to: {report_path}")
 
 
-# =========================
-# MODEL LOADER
-# =========================
+### MODEL LOADER ###
 
 def upload_classifiers(save_dir: Path):
   
     """
     Load all '*.pkl' models from a directory into a dict.
 
-    Parameters
-    ----------
-    save_dir : Path
-        Directory containing pickled models (e.g., 'classifiers/').
+    Parameters:
+    
+    - save_dir : Path ---> Directory containing pickled models (e.g., 'classifiers/').
 
-    Returns
-    -------
-    dict
-        {model_basename: estimator}, e.g. {'xgb': XGBClassifier(...), ...}
+    Returns:
+  
+    - dict like {model_basename: estimator}, e.g. {'xgb': XGBClassifier(...), ...}
     """
   
     save_dir = Path(save_dir)
@@ -781,6 +762,7 @@ def upload_classifiers(save_dir: Path):
                 loaded_models[model_name] = pickle.load(f)
             print(f" Loaded {model_name} from {model_path}")
     return loaded_models
+
 
 
 
