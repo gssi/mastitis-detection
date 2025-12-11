@@ -50,15 +50,11 @@ def counts_per_animal(df: pd.DataFrame) -> pd.Series:
     """
     Per-animal event counts.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Must contain 'CAPO_IDENTIFICATIVO'.
+    Parameters :
+    - df : pd.DataFrame ---> Must contain 'CAPO_IDENTIFICATIVO'.
 
-    Returns
-    -------
-    pd.Series
-        Counts by 'CAPO_IDENTIFICATIVO'.
+    Returns :
+    - pd.Series ---> Counts by 'CAPO_IDENTIFICATIVO'.
     """
     
     return df.groupby("CAPO_IDENTIFICATIVO", observed=True).size()
@@ -69,12 +65,9 @@ def show_dist(label: str, s: pd.Series) -> None:
     """
     Log distribution summary for counts series.
 
-    Parameters
-    ----------
-    label : str
-        Label for the log line (e.g., 'Step 0 (raw)').
-    s : pd.Series
-        Series of counts by animal.
+    Parameters :
+    - label : str ---> Label for the log line (e.g., 'Step 0 (raw)').
+    - s : pd.Series ---> Series of counts by animal.
     """
     
     if len(s) == 0:
@@ -99,29 +92,6 @@ def unisci(lista_df, lista_chiavi, metodo):
     - If all are numeric, promote to a common numeric dtype with numpy's 'promote_types'.
     - Otherwise, raise TypeError.
     After harmonization, perform a chained merge using functools.reduce.
-
-    Parameters
-    ----------
-    lista_df : list[pd.DataFrame]
-        DataFrames to merge.
-    lista_chiavi : list[str]
-        Column names to merge on (must exist in all DataFrames).
-    metodo : {'inner','left','right','outer'}
-        Merge strategy.
-
-    Returns
-    -------
-    pd.DataFrame
-        Merged DataFrame.
-
-    Raises
-    ------
-    KeyError
-        If a join key is missing in any DataFrame.
-    TypeError
-        If key dtypes are incompatible and cannot be harmonized.
-    ValueError
-        If the resulting merge is empty (likely a join-key mismatch).
     """
     
     if not lista_df:
@@ -170,11 +140,6 @@ def treat_main(keep_all_years: bool = False) -> None:
     5) Deduplicate to one treatment per animal-month (keep earliest day).
     6) Join with 'coppie' (eartag -> internal id), then restrict to CF IDs.
     7) Save Parquet outputs.
-
-    Parameters
-    ----------
-    keep_all_years : bool, default False
-        If True, skip the year filter; otherwise keep only year > 2019.
     """
     
     # CF IDs 
@@ -258,12 +223,11 @@ def treat_main(keep_all_years: bool = False) -> None:
     del df_joined
     gc.collect()
 
-
-
 ### ENTRY POINT ###
 
 if __name__ == "__main__":
     treat_main()
+
 
 
 
