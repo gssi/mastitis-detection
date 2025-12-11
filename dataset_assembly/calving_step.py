@@ -46,17 +46,12 @@ def count_parts(df: pd.DataFrame, label: str) -> pd.Series:
     """
     Compute per-animal calving event counts and log their distribution.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        DataFrame containing 'idAnimale' (per-animal rows).
-    label : str
-        A label to distinguish stages (e.g., 'raw', 'final') in logs.
+    Parameters:
+    - df : pd.DataFrame ---> DataFrame containing 'idAnimale' (per-animal rows).
+    - label : str ---> A label to distinguish stages (e.g., 'raw', 'final') in logs.
 
-    Returns
-    -------
-    pd.Series
-        Series indexed by 'idAnimale' with the number of events per animal.
+    Returns:
+    - pd.Series ---> Series indexed by 'idAnimale' with the number of events per animal.
     """
     
     counts = df.groupby("idAnimale", observed=True).size()
@@ -165,12 +160,11 @@ def calving_main() -> None:
     del df2
     gc.collect()
 
-
-
 ### ENTRY POINT ###
 
 if __name__ == "__main__":
     calving_main()
+
 
 
 
