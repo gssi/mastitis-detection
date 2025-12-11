@@ -47,20 +47,6 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     
     """
     Apply Tukey's IQR rule to remove outliers on a numeric column.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input table.
-    col : str
-        Numeric column name to filter.
-    iqr_k : float, default 1.5
-        IQR multiplier (1.5 = standard Tukey fences).
-
-    Returns
-    -------
-    pd.DataFrame
-        Filtered DataFrame (rows outside [Q1 - k*IQR, Q3 + k*IQR] are removed).
     """
     
     q1 = df[col].quantile(0.25)
@@ -141,6 +127,7 @@ def ltts_main() -> None:
 
 if __name__ == "__main__":
     ltts_main()
+
 
 
 
