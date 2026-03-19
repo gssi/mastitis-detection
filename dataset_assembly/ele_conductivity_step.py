@@ -39,14 +39,6 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
   
     """
     Apply Tukey's IQR rule to remove outliers on a numeric column.
-
-    Parameters:
-    - df : pd.DataFrame ---> Input table.
-    - col : str ---> Column name on which to apply filtering.
-    - iqr_k : float, default 1.5 ---> Multiplier for IQR (1.5 = standard Tukey fences; increase to be less strict).
-
-    Returns:
-    - pd.DataFrame ---> Filtered DataFrame (rows outside [Q1 - k*IQR, Q3 + k*IQR] are removed).
     """
   
     q1 = df[col].quantile(0.25)
@@ -97,9 +89,7 @@ def ec_main() -> None:
     # Outlier removal
     df = IQR_filtering(df, VARIABILE)
     # Aggregate to one EC per animal-day
-    df_agg = df.groupby(
-        ["idAnimale", "anno", "mese", "giorno"], observed=True, as_index=False
-    ).agg({VARIABILE: "first"})
+    df_agg = df.groupby(["idAnimale", "anno", "mese", "giorno"], observed=True, as_index=False).agg({VARIABILE: "first"})
     # Free memory
     del df
     gc.collect()
