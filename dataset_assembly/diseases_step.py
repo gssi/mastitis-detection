@@ -33,15 +33,9 @@ COPPIE_TRAT_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_
 TARGET_DIAGNOSIS = "MAMMARIE"
 
 # Column rename map (Italian -> English)
-RENAME_MAP = {
-    "CAPO_IDENTIFICATIVO": "Marca",
-    "TIPODIAGNOSI_CODICE": "diagnosis",
-    "TRAT_DT_INIZIO_parsed": "t_date",
-    "giorno": "day",
-    "mese": "month",
-    "anno": "year",
-}
-
+RENAME_MAP = {"CAPO_IDENTIFICATIVO": "Marca", "TIPODIAGNOSI_CODICE": "diagnosis",
+              "TRAT_DT_INIZIO_parsed": "t_date", "giorno": "day",
+              "mese": "month", "anno": "year"}
 
 ### HELPERS ###
 
@@ -147,12 +141,7 @@ def treat_main(keep_all_years: bool = False) -> None:
     log.info("Unique IDs from functional check: %d", len(ids_cf))
     # Read raw treatments (mastitis only)
     cols = ["CAPO_IDENTIFICATIVO", "TIPODIAGNOSI_CODICE", "TRAT_DT_INIZIO"]
-    df = pd.read_csv(
-        RAW_CSV,
-        low_memory=False,
-        usecols=cols,
-        dtype={"CAPO_IDENTIFICATIVO": "string", "TIPODIAGNOSI_CODICE": "string"},
-    )
+    df = pd.read_csv(RAW_CSV, low_memory=False, usecols=cols, dtype={"CAPO_IDENTIFICATIVO": "string", "TIPODIAGNOSI_CODICE": "string"})
     df = df[df["TIPODIAGNOSI_CODICE"] == TARGET_DIAGNOSIS].copy()
     log.info("%d rows related to mastitis diagnosis uploaded", len(df))
     # Remove rows with missing start date
