@@ -8,7 +8,7 @@ This script:
 
 Join plan:
 1) LEFT join:  cf_agg <- ltts_agg <- ce_agg   on [id, day, month, year]
-2) OUTER join: (step1 without 'day') <-> parti_agg <-> coppie_trat_agg    on [id, month, year]
+2) OUTER join: (step1 without 'day') <-> parti_agg <-> coppie_trat_agg on [id, month, year]
 3) INNER join: (step2) x ana_agg   on [id]  
 
 Output:
@@ -17,17 +17,10 @@ Output:
 
 from libraries import Path, log, pd, gc, np, reduce
 
-
 ### PATHS AND STATICS ###
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-OUTPUT_PARQUET = (
-    PROJECT_ROOT
-    / "mammary_diseases_indicators"
-    / "temporary_datasets"
-    / "merged_dataset.parquet"
-)
-
+OUTPUT_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators"  / "temporary_datasets"  / "merged_dataset.parquet")
 
 ### HELPERS ###
 
@@ -102,35 +95,29 @@ def merge_main() -> None:
     log.info("START MERGING PHASE...")
     # Step 1: LEFT join on daily keys
     log.info("Step 1 – LEFT join between cf_agg, ltts_agg, ce_agg on keys [id, day, month, year]")
-    step1 = unisci([
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "cf_agg.parquet"),
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ltts_agg.parquet"),
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ce_agg.parquet"),
-    ], ["id", "day", "month", "year"], "left")
+    step1 = unisci([pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "cf_agg.parquet"),
+                    pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ltts_agg.parquet"),
+                    pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ce_agg.parquet")], 
+                   ["id", "day", "month", "year"], "left")
     gc.collect()
     # Step 2: OUTER join on monthly keys (drop 'day')
     log.info("Step 2 – OUTER join with parti_agg and coppie_trat_agg on keys [id, month, year]")
-    step2 = unisci([
-        step1.drop(columns="day", errors="ignore"),
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "parti_agg.parquet").drop(columns="day", errors="ignore"),
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "coppie_trat_agg.parquet").drop(columns="day", errors="ignore"),
-    ], ["id", "month", "year"], "outer")
+    step2 = unisci([step1.drop(columns="day", errors="ignore"), 
+                    pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "parti_agg.parquet").drop(columns="day", errors="ignore"),
+                    pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "coppie_trat_agg.parquet").drop(columns="day", errors="ignore")], 
+                   ["id", "month", "year"], "outer")
     del step1
     gc.collect()
     # Step 3: INNER join with anagraphic info
     log.info("Step 3 – INNER join with ana_agg on keys [id]")
-    merged = unisci([
-        step2,
-        pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ana_agg.parquet"),
-    ], ["id"], "inner")
+    merged = unisci([step2, pd.read_parquet(PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ana_agg.parquet")], 
+                    ["id"], "inner")
     del step2
     gc.collect()
     # Save
     merged = merged.drop("Marca", axis=1, errors="ignore") # Drop 'Marca' column to keep only animal ID
     merged.to_parquet(OUTPUT_PARQUET, index=False)
-    log.info(
-        "Merged dataset saved ➔ %s (%d rows, %d columns)",
-        OUTPUT_PARQUET, len(merged), merged.shape[1])
+    log.info("Merged dataset saved ➔ %s (%d rows, %d columns)", OUTPUT_PARQUET, len(merged), merged.shape[1])
     # Cleanup
     del merged
     gc.collect()
