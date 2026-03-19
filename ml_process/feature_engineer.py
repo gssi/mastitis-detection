@@ -30,20 +30,6 @@ def create_wide(input_path: Path,output_path: Path,lag_steps=None,id_col: str = 
     """
     Transform a longitudinal dataset into a wide, lag-augmented table.
 
-    Parameters:
-   
-    input_path : str ---> Path to input Parquet file.
-    output_path : str ---> Path where the wide-format Parquet will be written.
-    lag_steps : list[int] or None, optional
-        - List of positive integers representing temporal lags to compute
-        - within-animal (e.g., [1, 2]). If None, defaults to [1, 2].
-    id_col : str, default "id"
-        - Column identifying the animal/subject.
-    time_cols : tuple[str, str], default ("year", "month")
-        - Tuple with (year_col, month_col) used to order records over time.
-    min_year : int, default 2020
-        - Keep only rows with year_col >= min_year before final NA-drop.
-
     Notes:
     
     - Categorical one-hot: 'season', 'lactation_phase' (ignored if absent).
