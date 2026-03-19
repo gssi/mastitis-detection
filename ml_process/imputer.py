@@ -19,38 +19,24 @@ Main functionalities:
 from libraries import pd, Path, logging, wasserstein_distance, List, Dict, time, sns, plt, np
 from collections import defaultdict
 
-
 ### STATIC VARIABLES ###
 
 # Clinical variables to impute
 CLINICAL_COLS = ["scs", "milk", "protein", "fat", "lactose", "ec"]
-
 # Plausible ranges used for post-imputation sanity checks
-RANGES = {
-    "scs": (0, 9),
-    "milk": (0, 700),
-    "protein": (0, 6),
-    "fat": (0, 8),
-    "lactose": (4, 5.5),
-    "ec": (500, 2000),
-}
-
+RANGES = {"scs": (0, 9), "milk": (0, 700), 
+          "protein": (0, 6), "fat": (0, 8), 
+          "lactose": (4, 5.5), "ec": (500, 2000)}
 # Individual-based hierarchy (IHG): starts highly specific and backs off
-IHG = [
-    ["id", "mastitis", "lactation_phase", "age", "season"],
-    ["id", "mastitis", "lactation_phase", "age"],
-    ["id", "mastitis", "lactation_phase"],
-    ["id", "mastitis"],
-]
-
+IHG = [["id", "mastitis", "lactation_phase", "age", "season"],
+       ["id", "mastitis", "lactation_phase", "age"],
+       ["id", "mastitis", "lactation_phase"],
+       ["id", "mastitis"]]
 # Population-based hierarchy (PHG): broader, includes breed/healthy status
-PHG = [
-    ["mastitis", "healthy", "lactation_phase", "age", "season", "breed"],
-    ["mastitis", "healthy", "lactation_phase", "age", "season"],
-    ["mastitis", "healthy", "lactation_phase", "age"],
-    ["mastitis", "healthy", "lactation_phase"],
-]
-
+PHG = [["mastitis", "healthy", "lactation_phase", "age", "season", "breed"],
+       ["mastitis", "healthy", "lactation_phase", "age", "season"],
+       ["mastitis", "healthy", "lactation_phase", "age"],
+       ["mastitis", "healthy", "lactation_phase"]]
 
 
 ### FUNCTIONS ###
@@ -73,7 +59,7 @@ def apply_hierarchy(df: pd.DataFrame, col: str, hier: List[List[str]], log_map: 
 
     Notes:
     
-    - Groups with very few observations are skipped using a "per-group" support threshold (default: ≥3).
+    - Groups with very few observations are skipped using a "per-group" support threshold (default: >= 3).
     - Only groups whose keys are fully present in df are attempted.
     """
     
@@ -106,9 +92,7 @@ def hierarchical_block(df: pd.DataFrame, cols: List[str], hier1: List[List[str]]
     
     """
     Apply hierarchical imputation to multiple columns with sensible fallbacks.
-
     Strategy per column:
-    
     IHG (specific) → PHG (broader) → IHG (final attempt)
     """
     
@@ -130,7 +114,7 @@ def hierarchical_block(df: pd.DataFrame, cols: List[str], hier1: List[List[str]]
     return df
 
 
-def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
+def compute_iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
     
     """
     Compute a 3-point Imputation Quality Score (IQS):
@@ -140,7 +124,6 @@ def _iqs(pre: pd.DataFrame, post: pd.DataFrame, cols: List[str]) -> int:
 
     Returns int(IQS in {0, 1, 2, 3})
     """
-
     score = 0
     WD_THRESH = 0.10
     # 1) Normalized Wasserstein distance (robust to scale via IQR normalization)
@@ -233,7 +216,7 @@ def run_clinical_imputation(input_path: Path, output_path: Path, sample_frac_iqs
     # IQS evaluation only if we have enough cases
     if base.shape[0] > 100:
         logging.info("Evaluating IQS…")
-        iqs = _iqs(base, df_imp.loc[base.index, CLINICAL_COLS], CLINICAL_COLS)
+        iqs = compute_iqs(base, df_imp.loc[base.index, CLINICAL_COLS], CLINICAL_COLS)
         logging.info("IQS = %d/3", iqs)
     else:
         logging.info("IQS skipped (insufficient complete cases: %d)", base.shape[0])
