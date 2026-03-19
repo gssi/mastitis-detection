@@ -43,12 +43,6 @@ def counts_per_animal(df: pd.DataFrame) -> pd.Series:
     
     """
     Per-animal event counts.
-
-    Parameters :
-    - df : pd.DataFrame ---> Must contain 'CAPO_IDENTIFICATIVO'.
-
-    Returns :
-    - pd.Series ---> Counts by 'CAPO_IDENTIFICATIVO'.
     """
     
     return df.groupby("CAPO_IDENTIFICATIVO", observed=True).size()
@@ -58,10 +52,6 @@ def show_dist(label: str, s: pd.Series) -> None:
     
     """
     Log distribution summary for counts series.
-
-    Parameters :
-    - label : str ---> Label for the log line (e.g., 'Step 0 (raw)').
-    - s : pd.Series ---> Series of counts by animal.
     """
     
     if len(s) == 0:
