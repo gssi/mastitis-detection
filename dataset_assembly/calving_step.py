@@ -27,17 +27,10 @@ CF_IDS_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datas
 OUTPUT_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "parti_agg.parquet"
 
 # Column rename map (Italian -> English)
-RENAME_MAP = {
-    "idAnimale": "id",
-    "giorno": "day",
-    "mese": "month",
-    "anno": "year",
-    "NatiVivi": "born",
-    "NatiMorti": "nborn",
-    "data": "calving_date",
-    "Parto": "calving",
-}
-
+RENAME_MAP = {"idAnimale": "id", "giorno": "day", 
+              "mese": "month", "anno": "year", 
+              "NatiVivi": "born", "NatiMorti": "nborn", 
+              "data": "calving_date", "Parto": "calving"}
 
 ### FUNCTIONS ###
 
@@ -84,11 +77,7 @@ def calving_main() -> None:
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional check: %d", len(ids_cf))
     # Load raw calving data and base filters
-    df = pd.read_csv(
-        RAW_CSV,
-        low_memory=False,
-        usecols=lambda c: c not in {"idMisuraPrimaria", "codiceRazzaAIA", "codiceSpecieAIA", "siglaProvincia"},
-    )
+    df = pd.read_csv(RAW_CSV, low_memory=False, usecols=lambda c: c not in {"idMisuraPrimaria", "codiceRazzaAIA", "codiceSpecieAIA", "siglaProvincia"})
     df = df.query("anno > 2018").drop_duplicates()
     # Keep only animals present in CF universe
     df = df[df["idAnimale"].isin(ids_cf)]
@@ -97,14 +86,8 @@ def calving_main() -> None:
     # Stable temporal sort (mergesort preserves order on ties)
     df = df.sort_values(["idAnimale", "anno", "mese", "giorno"], kind="mergesort")
     # Aggregate to per-animal-day totals (sex and vitality)
-    df2 = df.groupby(
-        ["idAnimale", "giorno", "mese", "anno"], observed=True, as_index=False
-    ).agg({
-        "NumeroFemmineNateVive": "sum",
-        "NumeroFemmineNateMorte": "sum",
-        "NumeroMaschiNatiVivi": "sum",
-        "NumeroMaschiNatiMorti": "sum",
-    })
+    df2 = df.groupby(["idAnimale", "giorno", "mese", "anno"], observed=True, as_index=False).agg({"NumeroFemmineNateVive": "sum", "NumeroFemmineNateMorte": "sum",
+                                                                                                  "NumeroMaschiNatiVivi": "sum", "NumeroMaschiNatiMorti": "sum"})
     # Free memory
     del df
     gc.collect()
@@ -114,29 +97,15 @@ def calving_main() -> None:
     log.info("After filtering for per-category born < 3: %d animals", df2["idAnimale"].nunique())
     # Collapse to at most one calving per animal-month (keep earliest day)
     df2["mese_anno"] = df2["anno"].astype(str) + "-" + df2["mese"].astype(str).str.zfill(2)
-    df2 = (
-        df2.sort_values(["idAnimale", "mese_anno", "giorno"], kind="mergesort")
-           .drop_duplicates(subset=["idAnimale", "mese_anno"], keep="first")
-           .drop(columns="mese_anno")
-    )
+    df2 = (df2.sort_values(["idAnimale", "mese_anno", "giorno"], kind="mergesort").drop_duplicates(subset=["idAnimale", "mese_anno"], keep="first").drop(columns="mese_anno"))
     # Totals (live/dead) and event date
     df2["NatiVivi"] = df2["NumeroFemmineNateVive"] + df2["NumeroMaschiNatiVivi"]
     df2["NatiMorti"] = df2["NumeroFemmineNateMorte"] + df2["NumeroMaschiNatiMorti"]
-    df2["data"] = pd.to_datetime(
-        {"year": df2["anno"], "month": df2["mese"], "day": df2["giorno"]},
-        errors="coerce",
-    )
+    df2["data"] = pd.to_datetime({"year": df2["anno"], "month": df2["mese"], "day": df2["giorno"]}, errors="coerce")
     # Binary event flag
     df2["Parto"] = 1
     # Remove raw component columns now represented by totals
-    df2 = df2.drop(
-        columns=[
-            "NumeroFemmineNateMorte",
-            "NumeroFemmineNateVive",
-            "NumeroMaschiNatiVivi",
-            "NumeroMaschiNatiMorti",
-        ]
-    )
+    df2 = df2.drop(columns=["NumeroFemmineNateMorte", "NumeroFemmineNateVive", "NumeroMaschiNatiVivi", "NumeroMaschiNatiMorti"])
     # Remove empty events (no live nor dead births)
     df2 = df2[~((df2["NatiVivi"] == 0) & (df2["NatiMorti"] == 0))]
     log.info("After removing empty calving events: %d animals", df2["idAnimale"].nunique())
