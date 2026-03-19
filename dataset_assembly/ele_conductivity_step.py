@@ -20,27 +20,18 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-
 ### PATHS AND STATICS ###
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_CE_CSV = PROJECT_ROOT / "db" / "conducibilita_elettrica_latte" / "conducibilita_latte.csv"
 CF_IDS_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "cf_ids.parquet"
 OUTPUT_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ce_agg.parquet"
-
 # Name of the EC column in the raw file (accented header preserved)
 VARIABILE = "Conducibilità elettrica"
-
 # Column rename map (Italian -> English)
-RENAME_MAP = {
-    "idAnimale": "id",
-    "Conducibilità elettrica": "ec",
-    "giorno": "day",
-    "mese": "month",
-    "anno": "year",
-}
-
+RENAME_MAP = {"idAnimale": "id", "Conducibilità elettrica": "ec",
+              "giorno": "day", "mese": "month",
+              "anno": "year"}
 
 ### HELPERS ###
 
@@ -67,7 +58,6 @@ def IQR_filtering(df: pd.DataFrame, col: str, iqr_k: float = 1.5) -> pd.DataFram
     log.info("IQR filter on '%s': %d ➔ %d records", col, before, len(df))
     return df
 
-
 ### MAIN ###
 
 def ec_main() -> None:
@@ -89,11 +79,7 @@ def ec_main() -> None:
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional check: %d", len(ids_cf))
     # Load raw EC data and base filters
-    df = pd.read_csv(
-        RAW_CE_CSV,
-        low_memory=False,
-        usecols=lambda c: c not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"},
-    )
+    df = pd.read_csv(RAW_CE_CSV, low_memory=False, usecols=lambda c: c not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"})
     df = df.query("anno > 2018").drop_duplicates()
     df = df[df["idAnimale"].isin(ids_cf)]
     log.info("[1] Data loaded: %s rows, %s columns", f"{df.shape[0]:,}", df.shape[1])
