@@ -13,14 +13,12 @@ Notes:
 - Metrics are reported both via CV and on a held-out test set.
 """
 
-from libraries import (
-    pd, train_test_split, gc, multiprocessing, xgb, np,
+from libraries import (pd, train_test_split, gc, multiprocessing, xgb, np,
     GridSearchCV, accuracy_score, precision_score, f1_score, recall_score,
     roc_auc_score, confusion_matrix, RandomForestClassifier, CatBoostClassifier,
-    lgb, os, pickle, make_scorer, cross_validate
-)
-from pathlib import Path
+    lgb, os, pickle, make_scorer, cross_validate)
 
+from pathlib import Path
 
 ### DATA SPLIT ###
 
@@ -48,17 +46,13 @@ def split_by_animal(input_path: Path, target_col: str = 'mastitis',
                       
     df = pd.read_parquet(input_path).copy()
     # Columns to exclude from the models (potential leakage / identifiers)
-    exclude_cols = [
-        'id', target_col, f'{target_col}_t-1', f'{target_col}_t-2',
-        'healthy', 'month', 'year', 'month_t-1', 'month_t-2', 'year_t-1',
-        'year_t-2', 'age_cat'
-    ]
+    exclude_cols = ['id', target_col, f'{target_col}_t-1', f'{target_col}_t-2',
+                    'healthy', 'month', 'year', 'month_t-1', 'month_t-2', 'year_t-1',
+                    'year_t-2', 'age_cat']
     feature_cols = [col for col in df.columns if col not in exclude_cols]
     # Split based on unique animal IDs
     animal_ids = df['id'].unique()
-    train_ids, test_ids = train_test_split(
-        animal_ids, test_size=test_size, random_state=random_state
-    )
+    train_ids, test_ids = train_test_split(animal_ids, test_size=test_size, random_state=random_state)
     # Row selection by IDs
     train_df = df[df['id'].isin(train_ids)].reset_index(drop=True)
     test_df = df[df['id'].isin(test_ids)].reset_index(drop=True)
@@ -118,8 +112,6 @@ class RepeatedGroupKFoldWrapper:
     def get_n_splits(self, X=None, y=None, groups=None):
         return self.n_splits * self.n_repeats
 
-
-
 ### MODELS: XGB / RF / CAT / LGBM ###
 
 def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
@@ -134,23 +126,16 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     # 1) Available cores
     num_cores = max(1, multiprocessing.cpu_count() - 2)
     # 2) Base model
-    xgb_model = xgb.XGBClassifier(
-        random_state=42,
-        use_label_encoder=False,
-        eval_metric='auc',
-        n_jobs=num_cores
-    )
+    xgb_model = xgb.XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='auc', n_jobs=num_cores)
     # 3) Param grid (fixed with best values after Grid Search)
-    param_grid = {
-        'n_estimators': [300],
-        'max_depth': [8],
-        'learning_rate': [0.05],
-        'subsample': [0.7],
-        'colsample_bytree': [0.8],
-        'gamma': [5],
-        'reg_alpha': [2],
-        'reg_lambda': [5]
-    }
+    param_grid = {'n_estimators': [300],
+                  'max_depth': [8],
+                  'learning_rate': [0.05], 
+                  'subsample': [0.7],
+                  'colsample_bytree': [0.8],
+                  'gamma': [5],
+                  'reg_alpha': [2],
+                  'reg_lambda': [5]}
     # 4) Grouped CV
     cv = RepeatedGroupKFoldWrapper(groups=groups, n_splits=5, n_repeats=3, random_state=42)
     # 5) Grid search
@@ -160,8 +145,7 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         scoring='roc_auc',
         cv=cv,
         verbose=1,
-        n_jobs=num_cores
-    )
+        n_jobs=num_cores)
     # 6) Fit
     grid_search.fit(X_train_scaled, y_train)
     best_model_xgb = grid_search.best_estimator_
@@ -172,13 +156,11 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'precision': make_scorer(precision_score, zero_division=0),
         'recall': make_scorer(recall_score, zero_division=0),
         'f1': make_scorer(f1_score, zero_division=0),
-        'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    }
+        'roc_auc': make_scorer(roc_auc_score, needs_proba=True)}
     cv_scores = cross_validate(
         best_model_xgb, X_train_scaled, y_train,
         groups=groups, cv=cv, scoring=scoring,
-        n_jobs=num_cores, return_train_score=False
-    )
+        n_jobs=num_cores, return_train_score=False)
     print("\n Cross-Validation (mean ± std):")
     cv_summary = {}
     for metric in scoring.keys():
@@ -195,7 +177,6 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_test   = f1_score(y_test, y_pred, zero_division=0)
     auc_test  = roc_auc_score(y_test, y_pred_proba)
     cm_test   = confusion_matrix(y_test, y_pred)
-
     print("\n Test Set Metrics (XGB):")
     print(f"Accuracy:  {acc_test:.4f}")
     print(f"Precision: {prec_test:.4f}")
@@ -204,7 +185,6 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_test:.4f}")
     print("Confusion Matrix:")
     print(cm_test)
-
     # 9) Train set (sanity check)
     y_train_pred = best_model_xgb.predict(X_train_scaled)
     y_train_pred_proba = best_model_xgb.predict_proba(X_train_scaled)[:, 1]
@@ -214,7 +194,6 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_tr   = f1_score(y_train, y_train_pred, zero_division=0)
     auc_tr  = roc_auc_score(y_train, y_train_pred_proba)
     cm_tr   = confusion_matrix(y_train, y_train_pred)
-
     print("\n Training Set Metrics (XGB):")
     print(f"Accuracy:  {acc_tr:.4f}")
     print(f"Precision: {prec_tr:.4f}")
@@ -223,7 +202,6 @@ def call_xgb(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_tr:.4f}")
     print("Confusion Matrix:")
     print(cm_tr)
-
     # 10) Save model
     os.makedirs('classifier', exist_ok=True)
     model_path = os.path.join('classifier', 'xgb_model.pkl')
@@ -287,21 +265,15 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'min_samples_split': [10],
         'min_samples_leaf': [4],
         'max_features': ['sqrt'],
-        'bootstrap': [True],
-    }
+        'bootstrap': [True]}
     # 2) Base model
-    rf_base = RandomForestClassifier(
-        random_state=42,
-        verbose=0,
-        n_jobs=max(1, multiprocessing.cpu_count() - 2),
-    )
+    rf_base = RandomForestClassifier(random_state=42, verbose=0, n_jobs=max(1, multiprocessing.cpu_count() - 2))
     # 3) Grouped CV
     cv = RepeatedGroupKFoldWrapper(groups=groups, n_splits=5, n_repeats=3, random_state=42)
     # 4) Grid search
     print(" Starting RF Grid Search...")
     grid_search = GridSearchCV(
-        rf_base, param_grid, cv=cv, scoring='roc_auc', n_jobs=-1, verbose=2
-    )
+        rf_base, param_grid, cv=cv, scoring='roc_auc', n_jobs=-1, verbose=2)
     grid_search.fit(X_train_scaled, y_train)
     # 5) Best params/model
     best_params = grid_search.best_params_
@@ -310,8 +282,7 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         **best_params,
         random_state=42,
         verbose=0,
-        n_jobs=max(1, multiprocessing.cpu_count() - 2),
-    )
+        n_jobs=max(1, multiprocessing.cpu_count() - 2))
     # 6) Fit on full train
     best_model_rf.fit(X_train_scaled, y_train)
     # 7) CV metrics
@@ -320,13 +291,11 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'precision': make_scorer(precision_score, zero_division=0),
         'recall': make_scorer(recall_score, zero_division=0),
         'f1': make_scorer(f1_score, zero_division=0),
-        'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    }
+        'roc_auc': make_scorer(roc_auc_score, needs_proba=True)}
     cv_scores = cross_validate(
         best_model_rf, X_train_scaled, y_train,
         groups=groups, cv=cv, scoring=scoring,
-        n_jobs=-1, return_train_score=False
-    )
+        n_jobs=-1, return_train_score=False)
     print("\n Cross-Validation (mean ± std):")
     cv_summary = {}
     for metric in scoring.keys():
@@ -342,8 +311,7 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     rec_test  = recall_score(y_test, y_pred, zero_division=0)
     f1_test   = f1_score(y_test, y_pred, zero_division=0)
     auc_test  = roc_auc_score(y_test, y_pred_proba)
-    cm_test   = confusion_matrix(y_test, y_pred)
-              
+    cm_test   = confusion_matrix(y_test, y_pred)        
     print("\n Test Set Metrics (RF):")
     print(f"Accuracy:  {acc_test:.4f}")
     print(f"Precision: {prec_test:.4f}")
@@ -352,7 +320,6 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_test:.4f}")
     print("Confusion Matrix:")
     print(cm_test)
-
     # 9) Train set
     y_train_pred = best_model_rf.predict(X_train_scaled)
     y_train_pred_proba = best_model_rf.predict_proba(X_train_scaled)[:, 1]
@@ -362,7 +329,6 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_tr   = f1_score(y_train, y_train_pred, zero_division=0)
     auc_tr  = roc_auc_score(y_train, y_train_pred_proba)
     cm_tr   = confusion_matrix(y_train, y_train_pred)
-
     print("\n Training Set Metrics (RF):")
     print(f"Accuracy:  {acc_tr:.4f}")
     print(f"Precision: {prec_tr:.4f}")
@@ -371,7 +337,6 @@ def call_rf(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_tr:.4f}")
     print("Confusion Matrix:")
     print(cm_tr)
-
     # 10) Save model
     os.makedirs('classifier', exist_ok=True)
     model_path = os.path.join('classifier', 'rf_model.pkl')
@@ -437,25 +402,14 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'l2_leaf_reg': [5],
         'border_count': [64],
         'bagging_temperature': [1],
-        'random_strength': [5],
-    }
+        'random_strength': [5]}
     # 2) Base model
-    cat_model = CatBoostClassifier(
-        loss_function='Logloss',
-        boosting_type='Ordered',
-        eval_metric='AUC',
-        allow_writing_files=False,
-        verbose=200,
-        random_seed=42,
-        thread_count=max(1, multiprocessing.cpu_count() - 2),
-    )
+    cat_model = CatBoostClassifier(loss_function='Logloss', boosting_type='Ordered', eval_metric='AUC', allow_writing_files=False, verbose=200, random_seed=42, thread_count=max(1, multiprocessing.cpu_count() - 2))
     # 3) Grouped CV
     cv = RepeatedGroupKFoldWrapper(groups=groups, n_splits=5, n_repeats=3, random_state=42)
     # 4) Grid search
     print(" Starting CatBoost Grid Search...")
-    grid_search = GridSearchCV(
-        cat_model, param_grid, cv=cv, scoring='f1', verbose=2, n_jobs=-1
-    )
+    grid_search = GridSearchCV(cat_model, param_grid, cv=cv, scoring='f1', verbose=2, n_jobs=-1)
     grid_search.fit(X_train_scaled, y_train)
     # 5) Best params & model
     best_params = grid_search.best_params_
@@ -467,8 +421,7 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         allow_writing_files=False,
         random_seed=42,
         thread_count=max(1, multiprocessing.cpu_count() - 2),
-        verbose=100,
-    )
+        verbose=100)
     best_model_cat.fit(X_train_scaled, y_train)
     # 6) CV metrics (mean ± std)
     scoring = {
@@ -476,13 +429,11 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'precision': make_scorer(precision_score, zero_division=0),
         'recall': make_scorer(recall_score, zero_division=0),
         'f1': make_scorer(f1_score, zero_division=0),
-        'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    }
+        'roc_auc': make_scorer(roc_auc_score, needs_proba=True)}
     cv_scores = cross_validate(
         best_model_cat, X_train_scaled, y_train,
         groups=groups, cv=cv, scoring=scoring,
-        n_jobs=-1, return_train_score=False
-    )
+        n_jobs=-1, return_train_score=False)
     print("\n Cross-Validation (mean ± std):")
     cv_summary = {}
     for metric in scoring.keys():
@@ -499,7 +450,6 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_test   = f1_score(y_test, y_pred, zero_division=0)
     auc_test  = roc_auc_score(y_test, y_pred_proba)
     cm_test   = confusion_matrix(y_test, y_pred)
-
     print("\n Test Set Metrics (CatBoost):")
     print(f"Accuracy:  {acc_test:.4f}")
     print(f"Precision: {prec_test:.4f}")
@@ -508,7 +458,6 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_test:.4f}")
     print("Confusion Matrix:")
     print(cm_test)
-
     # 8) Train set metrics
     y_train_pred = best_model_cat.predict(X_train_scaled)
     y_train_pred_proba = best_model_cat.predict_proba(X_train_scaled)[:, 1]
@@ -518,7 +467,6 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_tr   = f1_score(y_train, y_train_pred, zero_division=0)
     auc_tr  = roc_auc_score(y_train, y_train_pred_proba)
     cm_tr   = confusion_matrix(y_train, y_train_pred)
-
     print("\n Training Set Metrics (CatBoost):")
     print(f"Accuracy:  {acc_tr:.4f}")
     print(f"Precision: {prec_tr:.4f}")
@@ -527,7 +475,6 @@ def call_cat(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_tr:.4f}")
     print("Confusion Matrix:")
     print(cm_tr)
-
     # 9) Save model
     os.makedirs('classifier', exist_ok=True)
     model_path = os.path.join('classifier', 'cat_model.pkl')
@@ -596,25 +543,14 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'min_data_in_leaf': [50],
         'max_bin': [255],
         'lambda_l1': [0.3],
-        'lambda_l2': [1.0],
-    }
+        'lambda_l2': [1.0]}
     # 2) Base model
-    lgbm_model = lgb.LGBMClassifier(
-        boosting_type="gbdt",
-        objective="binary",
-        is_unbalance=False,
-        random_state=42,
-        metric="auc",
-        n_jobs=max(1, multiprocessing.cpu_count() - 2),
-        verbose=-1,
-    )
+    lgbm_model = lgb.LGBMClassifier(boosting_type="gbdt", objective="binary", is_unbalance=False, random_state=42, metric="auc", n_jobs=max(1, multiprocessing.cpu_count() - 2), verbose=-1)
     # 3) Grouped CV
     cv = RepeatedGroupKFoldWrapper(groups=groups, n_splits=5, n_repeats=3, random_state=42)
     # 4) Grid search
-    print(" Starting LGBM Grid Search...")
-    grid_search = GridSearchCV(
-        lgbm_model, param_grid, cv=cv, scoring='roc_auc', n_jobs=-1, verbose=2
-    )
+    print("Starting LGBM Grid Search...")
+    grid_search = GridSearchCV(lgbm_model, param_grid, cv=cv, scoring='roc_auc', n_jobs=-1, verbose=2)
     grid_search.fit(X_train_scaled, y_train)
     # 5) Best params/model
     best_params = grid_search.best_params_
@@ -626,8 +562,7 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         metric="auc",
         random_state=42,
         n_jobs=max(1, multiprocessing.cpu_count() - 2),
-        verbose=-1,
-    )
+        verbose=-1)
     best_model_lgbm.fit(X_train_scaled, y_train)
     # 6) CV metrics (mean ± std)
     scoring = {
@@ -635,13 +570,11 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         'precision': make_scorer(precision_score, zero_division=0),
         'recall': make_scorer(recall_score, zero_division=0),
         'f1': make_scorer(f1_score, zero_division=0),
-        'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    }
+        'roc_auc': make_scorer(roc_auc_score, needs_proba=True)}
     cv_scores = cross_validate(
         best_model_lgbm, X_train_scaled, y_train,
         groups=groups, cv=cv, scoring=scoring,
-        n_jobs=-1, return_train_score=False
-    )
+        n_jobs=-1, return_train_score=False)
     print("\n Cross-Validation (mean ± std):")
     cv_summary = {}
     for metric in scoring.keys():
@@ -658,7 +591,6 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_test   = f1_score(y_test, y_pred, zero_division=0)
     auc_test  = roc_auc_score(y_test, y_pred_proba)
     cm_test   = confusion_matrix(y_test, y_pred)
-
     print("\n Test Set Metrics (LGBM):")
     print(f"Accuracy:  {acc_test:.4f}")
     print(f"Precision: {prec_test:.4f}")
@@ -667,7 +599,6 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_test:.4f}")
     print("Confusion Matrix:")
     print(cm_test)
-
     # 8) Train set
     y_train_pred = best_model_lgbm.predict(X_train_scaled)
     y_train_pred_proba = best_model_lgbm.predict_proba(X_train_scaled)[:, 1]
@@ -677,7 +608,6 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     f1_tr   = f1_score(y_train, y_train_pred, zero_division=0)
     auc_tr  = roc_auc_score(y_train, y_train_pred_proba)
     cm_tr   = confusion_matrix(y_train, y_train_pred)
-
     print("\n Training Set Metrics (LGBM):")
     print(f"Accuracy:  {acc_tr:.4f}")
     print(f"Precision: {prec_tr:.4f}")
@@ -686,7 +616,6 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
     print(f"ROC AUC:   {auc_tr:.4f}")
     print("Confusion Matrix:")
     print(cm_tr)
-
     # 9) Save model
     os.makedirs('classifier', exist_ok=True)
     model_path = os.path.join('classifier', 'lgbm_model.pkl')
@@ -733,21 +662,12 @@ def call_lgbm(X_train_scaled: pd.DataFrame, y_train: pd.Series,
         f.write("\n".join(lines))
     print(f"Metrics report saved to: {report_path}")
 
-
 ### MODEL LOADER ###
 
 def upload_classifiers(save_dir: Path):
   
     """
     Load all '*.pkl' models from a directory into a dict.
-
-    Parameters:
-    
-    - save_dir : Path ---> Directory containing pickled models (e.g., 'classifiers/').
-
-    Returns:
-  
-    - dict like {model_basename: estimator}, e.g. {'xgb': XGBClassifier(...), ...}
     """
   
     save_dir = Path(save_dir)
