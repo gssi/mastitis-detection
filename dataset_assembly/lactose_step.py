@@ -20,26 +20,17 @@ Outputs:
 
 from libraries import pd, Path, log, gc
 
-
 ### PATHS AND STATICS ###
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_LTTS_CSV = PROJECT_ROOT / "db" / "lattosio" / "lattosio.csv"
 CF_IDS_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "cf_ids.parquet"
 OUTPUT_PARQUET = PROJECT_ROOT / "mammary_diseases_indicators" / "temporary_datasets" / "ltts_agg.parquet"
-
 VARIABILE = "Lattosio"
-
 # Column rename map (Italian -> English)
-RENAME_MAP = {
-    "idAnimale": "id",
-    "Lattosio": "lactose",
-    "giorno": "day",
-    "mese": "month",
-    "anno": "year",
-}
-
+RENAME_MAP = {"idAnimale": "id", "Lattosio": "lactose",
+              "giorno": "day", "mese": "month",
+              "anno": "year"}
 
 ### HELPERS ###
 
@@ -80,11 +71,7 @@ def ltts_main() -> None:
     ids_cf = pd.read_parquet(CF_IDS_PARQUET)["id"].unique()
     log.info("Unique IDs from functional control: %d", len(ids_cf))
     # Load lactose data and base filters
-    df = pd.read_csv(
-        RAW_LTTS_CSV,
-        low_memory=False,
-        usecols=lambda c: c not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"},
-    )
+    df = pd.read_csv(RAW_LTTS_CSV, low_memory=False, usecols=lambda c: c not in {"idMisuraPrimaria", "siglaProvincia", "codiceRazzaAIA", "codiceSpecieAIA"})
     df = df.query("anno > 2018").drop_duplicates()
     # Keep only animals present in CF universe
     df = df[df["idAnimale"].isin(ids_cf)]
@@ -104,11 +91,7 @@ def ltts_main() -> None:
     # Outlier removal via IQR
     df = IQR_filtering(df, VARIABILE)
     # Aggregate to one measurement per animal-day
-    df_agg = df.groupby(
-        ["idAnimale", "anno", "mese", "giorno"],
-        observed=True,
-        as_index=False
-    ).agg({VARIABILE: "first"})
+    df_agg = df.groupby(["idAnimale", "anno", "mese", "giorno"], observed=True, as_index=False).agg({VARIABILE: "first"})
     # Free memory
     del df
     gc.collect()
